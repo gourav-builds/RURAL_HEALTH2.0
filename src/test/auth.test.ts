@@ -84,4 +84,25 @@ describe('Authentication & Cryptographic Security', () => {
     const isValid = await verifyPin('4321', stored!.pinSalt!, stored!.pinHash!);
     expect(isValid).toBe(true);
   });
+
+  it('works in non-secure HTTP contexts where crypto.subtle is undefined', async () => {
+    const originalSubtle = crypto.subtle;
+    try {
+      // Simulate non-secure context (e.g. tablet accessing http://192.168.x.x/)
+      Object.defineProperty(crypto, 'subtle', { value: undefined, configurable: true });
+
+      const pin = '2468';
+      const salt = generateSalt();
+      const hash = await hashPin(pin, salt);
+      expect(hash).toMatch(/^[0-9a-f]{64}$/);
+
+      const isValid = await verifyPin(pin, salt, hash);
+      expect(isValid).toBe(true);
+
+      const isInvalid = await verifyPin('1111', salt, hash);
+      expect(isInvalid).toBe(false);
+    } finally {
+      Object.defineProperty(crypto, 'subtle', { value: originalSubtle, configurable: true });
+    }
+  });
 });

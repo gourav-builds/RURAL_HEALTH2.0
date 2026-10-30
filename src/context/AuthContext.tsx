@@ -27,6 +27,35 @@ interface AuthContextValue {
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
 
+// Safe session storage helpers (safeguards against browser privacy/quota restrictions)
+function getSessionToken(): string | null {
+  try {
+    return typeof sessionStorage !== 'undefined' ? sessionStorage.getItem('ruralcare_active_session') : null;
+  } catch {
+    return null;
+  }
+}
+
+function setSessionToken(userId: string): void {
+  try {
+    if (typeof sessionStorage !== 'undefined') {
+      sessionStorage.setItem('ruralcare_active_session', userId);
+    }
+  } catch {
+    // Ignore storage restriction
+  }
+}
+
+function clearSessionToken(): void {
+  try {
+    if (typeof sessionStorage !== 'undefined') {
+      sessionStorage.removeItem('ruralcare_active_session');
+    }
+  } catch {
+    // Ignore storage restriction
+  }
+}
+
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [device, setDevice] = useState<DeviceState | null>(null);
   const [clinician, setClinician] = useState<ClinicianProfile | null>(null);
@@ -59,7 +88,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setClinician(profile);
 
         // If an active session exists in this browser tab, restore session
-        const activeSession = typeof sessionStorage !== 'undefined' ? sessionStorage.getItem('ruralcare_active_session') : null;
+        const activeSession = getSessionToken();
         if (activeSession && activeSession === state.userId) {
           setIsAuthenticated(true);
           setIsLocked(false);
@@ -111,9 +140,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   // Terminate session
   const logout = useCallback(() => {
-    if (typeof sessionStorage !== 'undefined') {
-      sessionStorage.removeItem('ruralcare_active_session');
-    }
+    clearSessionToken();
     setIsAuthenticated(false);
     setIsLocked(false);
   }, []);
@@ -164,8 +191,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setIsLocked(false);
       lastActivityRef.current = Date.now();
 
-      if (typeof sessionStorage !== 'undefined' && device?.userId) {
-        sessionStorage.setItem('ruralcare_active_session', device.userId);
+      if (device?.userId) {
+        setSessionToken(device.userId);
       }
 
       // Update lastLoginAt
@@ -232,9 +259,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     };
 
     setClinician(profile);
-    if (typeof sessionStorage !== 'undefined') {
-      sessionStorage.setItem('ruralcare_active_session', newState.userId);
-    }
+    setSessionToken(newState.userId);
     setIsAuthenticated(true);
     setIsLocked(false);
     lastActivityRef.current = Date.now();

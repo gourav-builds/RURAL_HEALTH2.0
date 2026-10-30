@@ -89,8 +89,10 @@ export function SetupScreen() {
       );
       await reloadDevice();
       navigate('/dashboard', { replace: true });
-    } catch {
-      setError('Station enrollment failed. Please retry.');
+    } catch (err: unknown) {
+      console.error('Station enrollment failure:', err);
+      const msg = err instanceof Error ? err.message : String(err);
+      setError(`Enrollment failed: ${msg}`);
     } finally {
       setIsProvisioning(false);
     }
