@@ -86,9 +86,13 @@ export function SyncCenterScreen() {
   };
 
   const allOps = useLiveQuery(
-    () => db.outbox.orderBy('clientCreatedAt').reverse().limit(100).toArray(),
+    async () => {
+      const items = await db.outbox.toArray();
+      return items.sort((a, b) => b.clientCreatedAt.localeCompare(a.clientCreatedAt)).slice(0, 100);
+    },
     [], []
   );
+
 
   const pending   = allOps?.filter(o => o.status === 'pending' || o.status === 'sending') ?? [];
   const failed    = allOps?.filter(o => o.status === 'error') ?? [];

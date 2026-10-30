@@ -30,7 +30,8 @@ export class RuralCareDB extends Dexie {
       // Indexed fields only — non-indexed fields stored but not queried by index
       patients:      '&id, orgId, syncStatus, deletedAt, updatedAt, lastName',
       consultations: '&id, patientId, orgId, clinicalStatus, syncStatus, deletedAt, updatedAt',
-      outbox:        '&id, status, entityType, entityId, nextRetryAt',
+      outbox:        '&id, status, entityType, entityId, nextRetryAt, clientCreatedAt',
+
       syncCursors:   '&id',
       deviceState:   '&id',
       conflicts:     '&id, entityId, entityType, resolvedAt',
