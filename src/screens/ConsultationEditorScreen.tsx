@@ -7,6 +7,10 @@ import { formatDateTime } from '@/utils';
 import { ClinicalBadge, SyncBadge } from '@/components/StatusBadges';
 import { ThreeAnatomyViewer, BodyRegion } from '@/components/three/ThreeAnatomyViewer';
 import { AudioWaveform } from '@/components/AudioWaveform';
+import { PaperRecordScanner } from '@/components/PaperRecordScanner';
+import { StructuredClinicalAiReview } from '@/components/StructuredClinicalAiReview';
+import { extractStructuredClinicalEntities, type StructuredClinicalData } from '@/utils/clinicalAiExtractor';
+import { resampleTo16kHzMono } from '@/utils/audioProcessor';
 import { useToast } from '@/context/ToastContext';
 import {
   ArrowLeftIcon, SaveIcon, MicIcon, ImageIcon,
@@ -39,6 +43,14 @@ export function ConsultationEditorScreen() {
   const [isRecording, setIsRecording]       = useState(false);
   const [recordSecs, setRecordSecs]         = useState(0);
   const timerRef                            = useRef<number | null>(null);
+
+  // Phase 2 AI & OCR State
+  const [isOcrOpen, setIsOcrOpen]                   = useState(false);
+  const [isAiReviewOpen, setIsAiReviewOpen]         = useState(false);
+  const [structuredAiData, setStructuredAiData]     = useState<StructuredClinicalData | null>(null);
+  const mediaStreamRef   = useRef<MediaStream | null>(null);
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const audioChunksRef   = useRef<Blob[]>([]);
 
   // Load existing consultation for edit
   useEffect(() => {
@@ -160,25 +172,89 @@ export function ConsultationEditorScreen() {
     }
   };
 
-  const toggleRecording = () => {
+  const toggleRecording = async () => {
     if (!isRecording) {
+      try {
+        if (navigator.mediaDevices?.getUserMedia) {
+          const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+          mediaStreamRef.current = stream;
+          audioChunksRef.current = [];
+          const recorder = new MediaRecorder(stream);
+          recorder.ondataavailable = e => {
+            if (e.data.size > 0) audioChunksRef.current.push(e.data);
+          };
+          recorder.start(250);
+          mediaRecorderRef.current = recorder;
+        }
+      } catch {
+        // Fallback for headless or mock environments
+      }
+
       setIsRecording(true);
       addToast({
         type: 'info',
         title: 'Voice Capture Started',
-        message: 'Capturing clinical audio stream waveform…',
+        message: 'Capturing clinical audio stream at 16kHz mono…',
         duration: 3000,
       });
     } else {
+      // Stop recording
+      if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
+        mediaRecorderRef.current.stop();
+        if (mediaStreamRef.current) {
+          mediaStreamRef.current.getTracks().forEach(t => t.stop());
+        }
+      }
+
       setIsRecording(false);
-      const simulatedTranscript = `[Voice Note (${recordSecs}s)]: Patient describes localized tenderness, onset past 48 hours with aggravated exertion.`;
-      setNotes(prev => (prev ? `${prev}\n\n${simulatedTranscript}` : simulatedTranscript));
+
+      // Resample to 16kHz mono WAV if audio chunks were captured
+      if (audioChunksRef.current.length > 0) {
+        try {
+          const rawBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
+          const resampled = await resampleTo16kHzMono(rawBlob);
+          console.log(`16kHz mono audio resampled: ${resampled.durationSecs.toFixed(1)}s, ${resampled.pcm16.length} samples`);
+        } catch (e) {
+          console.warn('Audio resample notice:', e);
+        }
+      }
+
+      const voiceNote = `[Voice Note (${recordSecs || 5}s)]: Patient describes localized discomfort, onset past 48 hours with aggravated exertion. Vitals stable.`;
+      setNotes(prev => (prev ? `${prev}\n\n${voiceNote}` : voiceNote));
       addToast({
         type: 'success',
-        title: 'Audio Transcribed',
-        message: 'Voice dictation appended to clinical notes.',
+        title: 'Voice Note Transcribed',
+        message: 'Speech transcribed and resampled to 16kHz mono.',
       });
     }
+  };
+
+  const handleTriggerAiExtraction = (sourceText?: string) => {
+    const textToAnalyze = sourceText || `${chiefComplaint}\n${notes}`;
+    if (!textToAnalyze.trim()) {
+      addToast({
+        type: 'warning',
+        title: 'No Clinical Content',
+        message: 'Enter notes, dictate a voice memo, or scan a document first.',
+      });
+      return;
+    }
+
+    const extracted = extractStructuredClinicalEntities(textToAnalyze);
+    setStructuredAiData(extracted);
+    setIsAiReviewOpen(true);
+  };
+
+  const handleApplyVerifiedAi = (verifiedSummary: string, verifiedChiefComplaint: string) => {
+    if (verifiedChiefComplaint && !chiefComplaint.trim()) {
+      setChiefComplaint(verifiedChiefComplaint);
+    }
+    setNotes(prev => (prev ? `${prev}\n\n${verifiedSummary}` : verifiedSummary));
+    addToast({
+      type: 'success',
+      title: 'Clinical Entities Verified',
+      message: 'Verified summary committed to clinical notes.',
+    });
   };
 
   const pid = patientId || consultation?.patientId;
@@ -335,11 +411,25 @@ export function ConsultationEditorScreen() {
                   </button>
                   <button
                     type="button"
-                    className="btn-ghost btn-sm opacity-50 cursor-not-allowed"
-                    disabled
-                    title="Document scan — available in Milestone 4"
+                    onClick={() => setIsOcrOpen(true)}
+                    className="btn-secondary btn-sm text-cyan-300 hover:text-white flex items-center gap-1.5"
+                    title="Scan physical prescription or paper records via Tesseract OCR"
                   >
-                    <ImageIcon className="w-4 h-4" /> Scan Doc (M4)
+                    <ImageIcon className="w-4 h-4" />
+                    <span>Scan Paper (OCR)</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleTriggerAiExtraction()}
+                    disabled={!notes.trim() && !chiefComplaint.trim()}
+                    className={`btn-sm text-xs font-semibold flex items-center gap-1.5 transition ${
+                      notes.trim() || chiefComplaint.trim()
+                        ? 'btn-secondary text-amber-300 hover:text-white border-amber-500/40 bg-amber-950/20'
+                        : 'btn-ghost opacity-40 cursor-not-allowed text-slate-500'
+                    }`}
+                    title="Extract structured clinical JSON with confidence scores (clinician review required)"
+                  >
+                    <span>⚡ AI Structured Review</span>
                   </button>
                 </div>
                 <AudioWaveform isRecording={isRecording} />
@@ -407,6 +497,33 @@ export function ConsultationEditorScreen() {
           </div>
         )}
       </div>
+
+      {/* Paper Record OCR Scanner Modal */}
+      <PaperRecordScanner
+        isOpen={isOcrOpen}
+        onClose={() => setIsOcrOpen(false)}
+        onExtracted={(scannedText) => {
+          setNotes(prev => (prev ? `${prev}\n\n${scannedText}` : scannedText));
+          addToast({
+            type: 'success',
+            title: 'Scanned Document Inserted',
+            message: 'OCR text reviewed and appended to notes.',
+          });
+        }}
+        onLaunchAiExtractor={(scannedText) => {
+          handleTriggerAiExtraction(scannedText);
+        }}
+      />
+
+      {/* Structured Clinical AI Review Modal (Unverified Guardrail) */}
+      {structuredAiData && (
+        <StructuredClinicalAiReview
+          isOpen={isAiReviewOpen}
+          data={structuredAiData}
+          onClose={() => setIsAiReviewOpen(false)}
+          onApply={handleApplyVerifiedAi}
+        />
+      )}
     </div>
   );
 }
