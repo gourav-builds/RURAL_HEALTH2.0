@@ -5,6 +5,8 @@ import { createPatient } from '@/db/patients';
 import { ArrowLeftIcon, SaveIcon, UserIcon } from '@/components/Icons';
 import type { Patient } from '@/types';
 
+import { useToast } from '@/context/ToastContext';
+
 type FormData = Omit<Patient,
   'id' | 'orgId' | 'localVersion' | 'serverVersion' |
   'syncStatus' | 'deletedAt' | 'createdAt' | 'updatedAt'
@@ -18,6 +20,7 @@ const DEFAULT: FormData = {
 
 export function PatientRegistrationScreen() {
   const navigate = useNavigate();
+  const { addToast } = useToast();
   const [form, setForm]       = useState<FormData>(DEFAULT);
   const [errors, setErrors]   = useState<Partial<FormData>>({});
   const [saving, setSaving]   = useState(false);
@@ -44,6 +47,11 @@ export function PatientRegistrationScreen() {
     setSaveError('');
     try {
       const patient = await createPatient(form);
+      addToast({
+        type: 'success',
+        title: 'Patient Intake Complete',
+        message: `${patient.firstName} ${patient.lastName} saved to IndexedDB with outbox record.`,
+      });
       navigate(`/patients/${patient.id}`, { replace: true });
     } catch (err: unknown) {
       if (err instanceof DOMException && err.name === 'QuotaExceededError') {
@@ -55,6 +63,7 @@ export function PatientRegistrationScreen() {
       setSaving(false);
     }
   };
+
 
   const Field = ({ id, label, required, error, children }: {
     id: string; label: string; required?: boolean; error?: string; children: React.ReactNode;

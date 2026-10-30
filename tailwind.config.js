@@ -5,8 +5,8 @@ export default {
   theme: {
     extend: {
       fontFamily: {
-        sans: ['Inter', 'system-ui', 'sans-serif'],
-        mono: ['JetBrains Mono', 'Fira Code', 'monospace'],
+        sans: ['"Plus Jakarta Sans"', 'Inter', 'system-ui', 'sans-serif'],
+        mono: ['"JetBrains Mono"', 'Fira Code', 'monospace'],
       },
       colors: {
         brand: {
@@ -23,18 +23,21 @@ export default {
           950: '#082f49',
         },
         surface: {
-          DEFAULT: '#0f172a',
-          card:    '#1e293b',
-          hover:   '#263348',
-          border:  '#334155',
+          DEFAULT: '#0a0f1d',
+          card:    '#111827',
+          cardAlt: '#141e33',
+          hover:   '#1c2640',
+          border:  '#223055',
+          borderLight: '#2e3e6b',
         },
         status: {
-          synced:   '#22c55e',
+          synced:   '#10b981',
           local:    '#f59e0b',
           conflict: '#ef4444',
-          pending:  '#a78bfa',
+          pending:  '#8b5cf6',
         },
       },
+
       animation: {
         'fade-in':   'fadeIn 0.2s ease-out',
         'slide-up':  'slideUp 0.25s ease-out',

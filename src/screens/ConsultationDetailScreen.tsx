@@ -120,6 +120,13 @@ export function ConsultationDetailScreen() {
         >
           <EditIcon className="w-3.5 h-3.5" /> Edit
         </button>
+        <button
+          onClick={() => window.print()}
+          className="btn-secondary btn-sm"
+          title="Print or export clinical record"
+        >
+          Print Record
+        </button>
         {consultation.clinicalStatus === 'draft' && (
           <button onClick={handleSubmitForReview} className="btn-secondary btn-sm">
             <ClockIcon className="w-3.5 h-3.5" /> Submit for review
@@ -132,6 +139,7 @@ export function ConsultationDetailScreen() {
           </button>
         )}
       </div>
+
 
       {/* Review attribution */}
       {consultation.reviewedBy && (

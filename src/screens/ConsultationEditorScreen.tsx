@@ -264,20 +264,54 @@ export function ConsultationEditorScreen() {
               />
             </div>
 
-            {/* Notes */}
+            {/* Notes with Quick Templates */}
             <div className="field">
-              <div className="flex items-center justify-between mb-1.5">
-                <label className="label mb-0" htmlFor="notes">Consultation notes</label>
-                {selectedRegion && (
+              <div className="flex items-center justify-between mb-1.5 flex-wrap gap-2">
+                <label className="label mb-0" htmlFor="notes">Clinical Documentation</label>
+                <div className="flex items-center gap-1.5 flex-wrap text-[11px] font-mono">
+                  <span className="text-slate-400">Templates:</span>
                   <button
                     type="button"
-                    onClick={() => handleSelectRegion(selectedRegion)}
-                    className="text-[11px] text-cyan-400 hover:text-cyan-300 font-mono"
+                    onClick={() => {
+                      const soap = `\n[SOAP CLINICAL RECORD]\nS (Subjective): \nO (Objective): Vitals: BP --/--, HR -- bpm, SpO2 --%, Temp --°C\nA (Assessment): \nP (Plan): \n`;
+                      setNotes(prev => (prev ? `${prev}\n${soap}` : soap));
+                    }}
+                    className="px-2 py-0.5 rounded bg-surface border border-surface-border hover:border-cyan-500/50 text-cyan-400 hover:text-white transition"
                   >
-                    + Tag {selectedRegion.name}
+                    + SOAP
                   </button>
-                )}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const vitals = `\n[VITALS]: BP: 120/80 mmHg | HR: 74 bpm | SpO2: 98% | Temp: 36.8°C | RR: 16/min\n`;
+                      setNotes(prev => (prev ? `${prev}\n${vitals}` : vitals));
+                    }}
+                    className="px-2 py-0.5 rounded bg-surface border border-surface-border hover:border-cyan-500/50 text-cyan-400 hover:text-white transition"
+                  >
+                    + Vitals
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const rx = `\n[RX / DISCHARGE PLAN]:\n1. \n2. Follow-up: 7 days or sooner if red-flag symptoms develop.\n`;
+                      setNotes(prev => (prev ? `${prev}\n${rx}` : rx));
+                    }}
+                    className="px-2 py-0.5 rounded bg-surface border border-surface-border hover:border-cyan-500/50 text-cyan-400 hover:text-white transition"
+                  >
+                    + Rx Plan
+                  </button>
+                  {selectedRegion && (
+                    <button
+                      type="button"
+                      onClick={() => handleSelectRegion(selectedRegion)}
+                      className="px-2 py-0.5 rounded bg-cyan-950 border border-cyan-500 text-cyan-300 font-bold"
+                    >
+                      + Tag {selectedRegion.name}
+                    </button>
+                  )}
+                </div>
               </div>
+
               <textarea
                 id="notes"
                 className="textarea min-h-[220px] text-sm leading-relaxed font-sans"

@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { Link } from 'react-router-dom';
 import { db } from '@/db';
@@ -10,6 +11,7 @@ import {
   RefreshIcon, AlertIcon, CheckIcon, XIcon,
   ClockIcon, WifiOffIcon, ActivityIcon,
 } from '@/components/Icons';
+
 
 
 
@@ -99,24 +101,33 @@ export function SyncCenterScreen() {
   const conflicts = allOps?.filter(o => o.status === 'conflict') ?? [];
   const done      = allOps?.filter(o => o.status === 'done').slice(0, 10) ?? [];
 
+  const [activeTab, setActiveTab] = useState<'all' | 'pending' | 'conflicts' | 'done'>('all');
+
+  const displayedOps = allOps?.filter(op => {
+    if (activeTab === 'pending') return op.status === 'pending' || op.status === 'sending';
+    if (activeTab === 'conflicts') return op.status === 'conflict';
+    if (activeTab === 'done') return op.status === 'done';
+    return true;
+  }) ?? [];
+
   return (
-    <div className="space-y-6 animate-fade-in">
+    <div className="space-y-6 animate-fade-in max-w-5xl">
       {/* Header */}
-      <div className="flex items-center justify-between gap-4">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h2 className="section-title text-xl">Sync Center</h2>
-          <p className="section-subtitle">
-            {lastSyncAt ? `Last synced: ${formatDateTime(lastSyncAt)}` : 'Never synced'}
+          <h2 className="section-title text-2xl font-extrabold tracking-tight">Sync Center & 3D Topology</h2>
+          <p className="section-subtitle mt-0.5">
+            {lastSyncAt ? `Telemetry verified: ${formatDateTime(lastSyncAt)}` : 'Offline station ledger active'}
           </p>
         </div>
         <button
           onClick={handleManualSync}
           disabled={!isOnline || isSyncing}
-          className="btn-primary"
+          className="btn-primary shadow-lg shadow-sky-900/30"
           aria-label="Trigger synchronisation"
         >
           <RefreshIcon className={`w-4 h-4 ${isSyncing ? 'animate-spin-slow' : ''}`} />
-          {isSyncing ? 'Syncing…' : 'Sync now'}
+          {isSyncing ? 'Reconciling…' : 'Sync Telemetry'}
         </button>
       </div>
 
@@ -125,20 +136,19 @@ export function SyncCenterScreen() {
 
       {/* Status overview */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-
         {[
-          { label: 'Pending',   count: pending.length,   icon: ClockIcon,    cls: 'text-violet-400', bg: 'bg-violet-900/30' },
-          { label: 'Conflicts', count: conflicts.length, icon: AlertIcon,    cls: 'text-red-400',    bg: 'bg-red-900/30' },
-          { label: 'Failed',    count: failed.length,    icon: XIcon,        cls: 'text-amber-400',  bg: 'bg-amber-900/30' },
-          { label: 'Done',      count: done.length,      icon: CheckIcon,    cls: 'text-green-400',  bg: 'bg-green-900/30' },
+          { id: 'pending',   label: 'Pending',   count: pending.length,   icon: ClockIcon,    cls: 'text-violet-400', bg: 'bg-violet-900/30' },
+          { id: 'conflicts', label: 'Conflicts', count: conflicts.length, icon: AlertIcon,    cls: 'text-red-400',    bg: 'bg-red-900/30' },
+          { id: 'failed',    label: 'Failed',    count: failed.length,    icon: XIcon,        cls: 'text-amber-400',  bg: 'bg-amber-900/30' },
+          { id: 'done',      label: 'Synced',    count: done.length,      icon: CheckIcon,    cls: 'text-emerald-400',bg: 'bg-emerald-900/30' },
         ].map(({ label, count, icon: Icon, cls, bg }) => (
-          <div key={label} className="card-sm flex items-center gap-3">
-            <div className={`${bg} rounded-lg p-2 flex-shrink-0`}>
+          <div key={label} className="card-sm flex items-center gap-3 border-surface-borderLight">
+            <div className={`${bg} rounded-xl p-2.5 flex-shrink-0`}>
               <Icon className={`w-4 h-4 ${cls}`} />
             </div>
             <div>
-              <p className="text-lg font-bold text-white">{count}</p>
-              <p className="text-xs text-slate-400">{label}</p>
+              <p className="text-xl font-extrabold text-white font-mono">{count}</p>
+              <p className="text-xs text-slate-400 font-medium">{label}</p>
             </div>
           </div>
         ))}
@@ -147,63 +157,55 @@ export function SyncCenterScreen() {
       {/* Offline notice */}
       {!isOnline && (
         <div className="alert-warning">
-          <WifiOffIcon className="w-4 h-4 flex-shrink-0" />
+          <WifiOffIcon className="w-5 h-5 flex-shrink-0" />
           <div>
-            <p className="font-semibold text-amber-300">No internet connection</p>
-            <p className="text-xs mt-0.5 text-amber-400/80">
-              Changes are saved on this device. Sync will resume automatically when connectivity returns.
+            <p className="font-bold text-amber-300">Autonomous Field Operation (Offline)</p>
+            <p className="text-xs mt-0.5 text-amber-400/90 leading-relaxed">
+              All clinical records are encrypted and preserved in local IndexedDB. Sync will automatically resume when network connectivity is established.
             </p>
           </div>
         </div>
       )}
 
-      {/* Conflicts */}
-      {conflicts.length > 0 && (
-        <section aria-labelledby="conflicts-heading">
-          <h3 id="conflicts-heading" className="section-title mb-3 flex items-center gap-2 text-red-400">
-            <AlertIcon className="w-4 h-4" /> Conflicts requiring resolution
+      {/* Outbox Queue Section with Tabs */}
+      <div className="space-y-4">
+        <div className="flex items-center justify-between border-b border-surface-border pb-3 flex-wrap gap-2">
+          <h3 className="section-title text-lg flex items-center gap-2">
+            <ActivityIcon className="w-5 h-5 text-cyan-400" />
+            Outbox Queue Ledger ({allOps?.length ?? 0})
           </h3>
-          <div className="space-y-2">
-            {conflicts.map(op => <OpRow key={op.id} op={op} />)}
+          <div className="flex items-center gap-1.5 bg-surface p-1 rounded-xl border border-surface-border text-xs">
+            {(['all', 'pending', 'conflicts', 'done'] as const).map(tab => (
+              <button
+                key={tab}
+                onClick={() => setActiveTab(tab)}
+                className={`px-3 py-1 rounded-lg font-medium capitalize transition-all ${
+                  activeTab === tab
+                    ? 'bg-cyan-950 border border-cyan-500/50 text-cyan-300 font-bold'
+                    : 'text-slate-400 hover:text-white'
+                }`}
+              >
+                {tab}
+              </button>
+            ))}
           </div>
-        </section>
-      )}
+        </div>
 
-      {/* Failed */}
-      {failed.length > 0 && (
-        <section aria-labelledby="failed-heading">
-          <h3 id="failed-heading" className="section-title mb-3 flex items-center gap-2 text-amber-400">
-            <XIcon className="w-4 h-4" /> Failed operations
-          </h3>
-          <div className="space-y-2">
-            {failed.map(op => <OpRow key={op.id} op={op} />)}
+        {displayedOps.length === 0 ? (
+          <div className="card text-center py-10">
+            <div className="empty-state">
+              <div className="empty-icon"><ActivityIcon className="w-6 h-6" /></div>
+              <p className="text-slate-300 font-medium">No operations in this view</p>
+              <p className="text-slate-500 text-xs">All records are up to date.</p>
+            </div>
           </div>
-        </section>
-      )}
+        ) : (
+          <div className="space-y-2.5">
+            {displayedOps.map(op => <OpRow key={op.id} op={op} />)}
+          </div>
+        )}
+      </div>
 
-      {/* Pending */}
-      {pending.length > 0 && (
-        <section aria-labelledby="pending-heading">
-          <h3 id="pending-heading" className="section-title mb-3 flex items-center gap-2 text-violet-400">
-            <ClockIcon className="w-4 h-4" /> Pending ({pending.length})
-          </h3>
-          <div className="space-y-2">
-            {pending.map(op => <OpRow key={op.id} op={op} />)}
-          </div>
-        </section>
-      )}
-
-      {/* Done / recent */}
-      {done.length > 0 && (
-        <section aria-labelledby="done-heading">
-          <h3 id="done-heading" className="section-title mb-3 flex items-center gap-2 text-green-400">
-            <CheckIcon className="w-4 h-4" /> Recently synced
-          </h3>
-          <div className="space-y-2">
-            {done.map(op => <OpRow key={op.id} op={op} />)}
-          </div>
-        </section>
-      )}
 
       {/* Empty state */}
       {(!allOps || allOps.length === 0) && (

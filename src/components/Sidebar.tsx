@@ -1,65 +1,91 @@
-/** Sidebar navigation component */
 import React from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
 import {
   HomeIcon, UsersIcon, ClipboardIcon, RefreshIcon,
-  SettingsIcon, ShieldIcon, WifiIcon, WifiOffIcon,
-  HeartIcon,
+  SettingsIcon, ShieldIcon,
+  HeartIcon, DatabaseIcon,
 } from '@/components/Icons';
-
 import { useSync } from '@/context/SyncContext';
 import { useDevice } from '@/context/DeviceContext';
+import { formatBytes } from '@/utils';
 
 interface NavItem {
   to: string;
   icon: React.ComponentType<{ className?: string }>;
   label: string;
   badge?: number;
+  badgeColor?: string;
 }
 
 export function Sidebar() {
-  const { isOnline, pendingCount, conflictCount, isSyncing, triggerSync } = useSync();
-  const { device } = useDevice();
+  const { pendingCount, conflictCount } = useSync();
+  const { device, storageInfo } = useDevice();
+
   const location = useLocation();
 
   const navItems: NavItem[] = [
-    { to: '/dashboard',   icon: HomeIcon,      label: 'Dashboard' },
-    { to: '/patients',    icon: UsersIcon,     label: 'Patients' },
+    { to: '/dashboard',     icon: HomeIcon,      label: 'Dashboard' },
+    { to: '/patients',      icon: UsersIcon,     label: 'Patients' },
     { to: '/consultations', icon: ClipboardIcon, label: 'Consultations' },
-    { to: '/sync',        icon: RefreshIcon,   label: 'Sync',     badge: (pendingCount + conflictCount) || undefined },
-    { to: '/settings',    icon: SettingsIcon,  label: 'Settings' },
+    {
+      to: '/sync',
+      icon: RefreshIcon,
+      label: 'Sync Center',
+      badge: (pendingCount + conflictCount) || undefined,
+      badgeColor: conflictCount > 0 ? 'bg-red-500' : 'bg-cyan-600',
+    },
+    { to: '/settings',      icon: SettingsIcon,  label: 'Settings' },
   ];
 
+  const percentUsed = storageInfo?.percentUsed ?? 1;
+
   return (
-    <aside className="w-64 flex-shrink-0 bg-surface-card border-r border-surface-border flex flex-col h-screen sticky top-0">
-      {/* Logo */}
-      <div className="px-5 py-6 border-b border-surface-border">
+    <aside className="w-64 flex-shrink-0 bg-surface-card border-r border-surface-border flex flex-col h-screen sticky top-0 select-none shadow-2xl">
+      {/* Brand Header */}
+      <div className="px-5 py-5 border-b border-surface-border">
         <div className="flex items-center gap-3">
-          <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-brand-500 to-sky-400 flex items-center justify-center shadow-lg shadow-brand-900/50">
+          <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-cyan-500 via-sky-600 to-indigo-600 flex items-center justify-center shadow-lg shadow-cyan-900/40 relative">
             <HeartIcon className="w-5 h-5 text-white" />
+            <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-emerald-400 rounded-full border-2 border-surface-card animate-pulse" />
           </div>
           <div>
-            <p className="font-bold text-white text-sm leading-tight">RuralCare</p>
-            <p className="text-[10px] text-slate-500 font-medium uppercase tracking-wider">Offline Healthcare</p>
+            <div className="flex items-center gap-1.5">
+              <span className="font-extrabold text-white text-base tracking-tight font-sans">RuralCare</span>
+              <span className="text-[9px] font-mono font-bold px-1.5 py-0.2 rounded bg-cyan-950 border border-cyan-800 text-cyan-300">
+                PRO
+              </span>
+            </div>
+            <p className="text-[10px] text-slate-400 font-mono tracking-wider uppercase">Field Workstation</p>
           </div>
         </div>
       </div>
 
-      {/* Nav items */}
+      {/* Main Navigation Links */}
       <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto" aria-label="Main navigation">
-        {navItems.map(({ to, icon: Icon, label, badge }) => {
+        <p className="px-3 mb-2 text-[10px] font-mono uppercase tracking-wider text-slate-500 font-semibold">
+          Core Workflows
+        </p>
+
+        {navItems.map(({ to, icon: Icon, label, badge, badgeColor }) => {
           const isActive = location.pathname.startsWith(to);
           return (
             <NavLink
               key={to}
               to={to}
-              className={isActive ? 'nav-item-active' : 'nav-item'}
+              className={`relative flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-medium transition-all group ${
+                isActive
+                  ? 'bg-gradient-to-r from-cyan-950/60 to-surface-hover text-white border border-cyan-500/30 shadow-lg shadow-cyan-950/20'
+                  : 'text-slate-400 hover:text-white hover:bg-surface-hover'
+              }`}
               aria-current={isActive ? 'page' : undefined}
             >
-              <Icon className="w-5 h-5 flex-shrink-0" />
+              {isActive && (
+                <span className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-5 bg-cyan-400 rounded-r" />
+              )}
+              <Icon className={`w-4 h-4 flex-shrink-0 transition-colors ${isActive ? 'text-cyan-400' : 'text-slate-400 group-hover:text-slate-200'}`} />
               <span className="flex-1">{label}</span>
               {badge !== undefined && badge > 0 && (
-                <span className="bg-brand-600 text-white text-[10px] font-bold rounded-full min-w-[18px] h-[18px] flex items-center justify-center px-1">
+                <span className={`${badgeColor ?? 'bg-cyan-600'} text-white text-[10px] font-bold rounded-full min-w-[18px] h-[18px] flex items-center justify-center px-1 font-mono`}>
                   {badge > 99 ? '99+' : badge}
                 </span>
               )}
@@ -68,41 +94,44 @@ export function Sidebar() {
         })}
       </nav>
 
-      {/* Status bar */}
-      <div className="px-3 py-4 border-t border-surface-border space-y-2">
-        {/* Online status */}
-        <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-surface text-xs">
-          {isOnline ? (
-            <WifiIcon className="w-4 h-4 text-green-400" />
-          ) : (
-            <WifiOffIcon className="w-4 h-4 text-amber-400" />
-          )}
-          <span className={isOnline ? 'text-green-400' : 'text-amber-400'}>
-            {isOnline ? 'Connected' : 'Offline'}
-          </span>
-          {pendingCount > 0 && (
-            <span className="ml-auto text-slate-500">{pendingCount} pending</span>
-          )}
+      {/* Storage & Station Status Footer */}
+      <div className="px-3 py-4 border-t border-surface-border space-y-3 bg-surface/50">
+        {/* Local Storage Telemetry Meter */}
+        <div className="p-3 rounded-xl bg-surface border border-surface-border space-y-2">
+          <div className="flex items-center justify-between text-[11px]">
+            <div className="flex items-center gap-1.5 text-slate-400">
+              <DatabaseIcon className="w-3.5 h-3.5 text-cyan-400" />
+              <span>Offline Cache</span>
+            </div>
+            <span className="font-mono text-slate-300 font-medium">
+              {percentUsed}%
+            </span>
+          </div>
+          <div className="w-full bg-slate-800 rounded-full h-1.5 overflow-hidden">
+            <div
+              className={`h-full rounded-full transition-all duration-500 ${
+                percentUsed > 80 ? 'bg-amber-500' : 'bg-cyan-400'
+              }`}
+              style={{ width: `${Math.min(100, percentUsed)}%` }}
+            />
+          </div>
+          <div className="flex justify-between text-[10px] font-mono text-slate-500">
+            <span>{storageInfo?.usage ? formatBytes(storageInfo.usage) : 'IndexedDB'}</span>
+            <span>{storageInfo?.available ? `${formatBytes(storageInfo.available)} free` : 'Ready'}</span>
+          </div>
         </div>
 
-        {/* Sync button */}
-        {isOnline && (
-          <button
-            onClick={triggerSync}
-            disabled={isSyncing}
-            className="w-full btn-ghost btn-sm flex items-center gap-2"
-            aria-label="Trigger synchronisation"
-          >
-            <RefreshIcon className={`w-4 h-4 ${isSyncing ? 'animate-spin-slow' : ''}`} />
-            {isSyncing ? 'Syncing…' : 'Sync now'}
-          </button>
-        )}
-
-        {/* Device identity */}
+        {/* Clinician Node Identity */}
         {device && (
-          <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-surface text-xs text-slate-500">
-            <ShieldIcon className="w-4 h-4 text-brand-500" />
-            <span className="truncate">{device.displayName}</span>
+          <div className="flex items-center gap-2.5 px-3 py-2 rounded-xl bg-surface border border-surface-border">
+            <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-brand-600 to-indigo-600 flex items-center justify-center text-white text-xs font-bold font-mono flex-shrink-0">
+              {device.displayName ? device.displayName[0] : 'C'}
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-xs font-semibold text-white truncate leading-tight">{device.displayName}</p>
+              <p className="text-[10px] font-mono text-slate-500 truncate">{device.deviceId.slice(0, 8)}</p>
+            </div>
+            <ShieldIcon className="w-4 h-4 text-cyan-400/80 flex-shrink-0" />
           </div>
         )}
       </div>
