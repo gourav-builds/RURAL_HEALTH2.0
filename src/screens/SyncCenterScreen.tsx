@@ -4,10 +4,13 @@ import { db } from '@/db';
 import { useSync } from '@/context/SyncContext';
 import { formatDateTime } from '@/utils';
 import type { OutboxOperation } from '@/types';
+import { ThreeSyncTopology } from '@/components/three/ThreeSyncTopology';
+import { useToast } from '@/context/ToastContext';
 import {
   RefreshIcon, AlertIcon, CheckIcon, XIcon,
   ClockIcon, WifiOffIcon, ActivityIcon,
 } from '@/components/Icons';
+
 
 
 
@@ -58,7 +61,29 @@ function OpRow({ op }: { op: OutboxOperation }) {
 
 export function SyncCenterScreen() {
   const { isOnline, isSyncing, triggerSync, lastSyncAt } = useSync();
+  const { addToast } = useToast();
 
+  const handleManualSync = async () => {
+    addToast({
+      type: 'info',
+      title: 'Initiating Full Telemetry Sync',
+      message: 'Processing offline queue through cryptographic pipeline…',
+    });
+    try {
+      await triggerSync();
+      addToast({
+        type: 'success',
+        title: 'Sync Batch Complete',
+        message: 'Local operations reconciled with remote ledger.',
+      });
+    } catch {
+      addToast({
+        type: 'error',
+        title: 'Sync Interrupted',
+        message: 'Could not connect to remote endpoint. Changes preserved safely offline.',
+      });
+    }
+  };
 
   const allOps = useLiveQuery(
     () => db.outbox.orderBy('clientCreatedAt').reverse().limit(100).toArray(),
@@ -81,7 +106,7 @@ export function SyncCenterScreen() {
           </p>
         </div>
         <button
-          onClick={triggerSync}
+          onClick={handleManualSync}
           disabled={!isOnline || isSyncing}
           className="btn-primary"
           aria-label="Trigger synchronisation"
@@ -91,8 +116,12 @@ export function SyncCenterScreen() {
         </button>
       </div>
 
+      {/* 3D Distributed Mesh Topology */}
+      <ThreeSyncTopology isOnline={isOnline} isSyncing={isSyncing} operations={allOps ?? []} />
+
       {/* Status overview */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+
         {[
           { label: 'Pending',   count: pending.length,   icon: ClockIcon,    cls: 'text-violet-400', bg: 'bg-violet-900/30' },
           { label: 'Conflicts', count: conflicts.length, icon: AlertIcon,    cls: 'text-red-400',    bg: 'bg-red-900/30' },

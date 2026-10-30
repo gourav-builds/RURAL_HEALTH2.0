@@ -11,10 +11,25 @@ import {
 } from '@/components/Icons';
 
 
+import { ThreeHeroCanvas } from '@/components/three/ThreeHeroCanvas';
+import { useToast } from '@/context/ToastContext';
+
 export function DashboardScreen() {
   const { device } = useDevice();
   const { pendingCount, conflictCount, isSyncing, isOnline, lastSyncAt, triggerSync } = useSync();
+  const { addToast } = useToast();
   const navigate = useNavigate();
+
+  const handleSyncWithToast = async () => {
+    addToast({
+      type: 'info',
+      title: 'Synchronizing Queue',
+      message: 'Checking for offline changes and verifying remote version vectors…',
+      duration: 3000,
+    });
+    await triggerSync();
+  };
+
 
   const recentPatients = useLiveQuery(async () => {
     if (!device) return [];
@@ -51,20 +66,49 @@ export function DashboardScreen() {
 
   return (
     <div className="space-y-6 animate-fade-in">
-      {/* Greeting */}
-      <div className="flex items-start justify-between gap-4">
-        <div>
-          <h2 className="text-2xl font-bold text-white">
-            {greeting}{device ? `, ${device.displayName.split(' ')[0]}` : ''}
-          </h2>
-          <p className="text-slate-400 text-sm mt-1">
-            {new Date().toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
-          </p>
+      {/* 3D Telemetry Hero Banner */}
+      <div className="card relative overflow-hidden bg-gradient-to-r from-surface-card via-slate-900 to-slate-950 border border-slate-700/60 p-6 shadow-2xl">
+        <div className="grid lg:grid-cols-12 gap-6 items-center">
+          <div className="lg:col-span-7 space-y-4 z-10">
+            <div className="flex items-center gap-2">
+              <span className="px-2.5 py-0.5 rounded-full text-xs font-mono font-medium bg-brand-950 border border-brand-500/40 text-brand-300">
+                CLINICAL NODE {device?.deviceId ? `• ${device.deviceId.slice(0, 8)}` : ''}
+              </span>
+              <span className="text-xs text-slate-400 font-mono">
+                {device?.orgId ? `Org: ${device.orgId.slice(0, 8)}` : 'Rural Health Station'}
+              </span>
+
+            </div>
+
+            <div>
+              <h2 className="text-3xl font-extrabold text-white tracking-tight">
+                {greeting}{device ? `, ${device.displayName.split(' ')[0]}` : ''}
+              </h2>
+              <p className="text-slate-300 text-sm mt-1 max-w-xl leading-relaxed">
+                Autonomous offline station active. All patient records and consultation vectors are cached in IndexedDB with cryptographic audit hashing.
+              </p>
+            </div>
+
+            <div className="flex flex-wrap items-center gap-3 pt-1">
+              <button onClick={() => navigate('/patients/new')} className="btn-primary shadow-lg shadow-sky-900/30">
+                <PlusIcon className="w-4 h-4" /> New Patient
+              </button>
+              <button onClick={() => navigate('/consultations/new')} className="btn-secondary">
+                <ClipboardIcon className="w-4 h-4 text-cyan-400" /> Start Consultation
+              </button>
+              <button onClick={handleSyncWithToast} disabled={!isOnline || isSyncing} className="btn-ghost text-xs">
+                <RefreshIcon className={`w-3.5 h-3.5 text-slate-400 ${isSyncing ? 'animate-spin-slow' : ''}`} />
+                {isSyncing ? 'Syncing...' : 'Sync Telemetry'}
+              </button>
+            </div>
+          </div>
+
+          <div className="lg:col-span-5 h-56 lg:h-64 relative rounded-xl overflow-hidden border border-slate-800/80 bg-slate-950/60 shadow-inner">
+            <ThreeHeroCanvas isOnline={isOnline} isSyncing={isSyncing} pendingCount={pendingCount} />
+          </div>
         </div>
-        <button onClick={() => navigate('/patients/new')} className="btn-primary flex-shrink-0">
-          <PlusIcon className="w-4 h-4" /> New patient
-        </button>
       </div>
+
 
       {/* Stats row */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">

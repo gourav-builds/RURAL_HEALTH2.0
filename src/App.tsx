@@ -67,14 +67,21 @@ function AppRoutes() {
   );
 }
 
+import { ToastProvider } from '@/context/ToastContext';
+import { ToastContainer } from '@/components/ToastContainer';
+
 export function App() {
   return (
     <BrowserRouter>
       <DeviceProvider>
         <SyncProvider>
-          <AppRoutes />
+          <ToastProvider>
+            <AppRoutes />
+            <ToastContainer />
+          </ToastProvider>
         </SyncProvider>
       </DeviceProvider>
     </BrowserRouter>
   );
 }
+
