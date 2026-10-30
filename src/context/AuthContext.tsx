@@ -58,12 +58,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         };
         setClinician(profile);
 
-        // If no PIN was setup (legacy M1), allow immediate auth or prompt PIN
-        if (!state.pinHash) {
+        // If an active session exists in this browser tab, restore session
+        const activeSession = typeof sessionStorage !== 'undefined' ? sessionStorage.getItem('ruralcare_active_session') : null;
+        if (activeSession && activeSession === state.userId) {
+          setIsAuthenticated(true);
+          setIsLocked(false);
+        } else if (!state.pinHash) {
+          // If no PIN was setup (legacy M1), allow immediate auth
           setIsAuthenticated(true);
           setIsLocked(false);
         } else {
-          // If returning with configured PIN, start at login challenge
+          // New window/tab requires clinical PIN verification
           setIsAuthenticated(false);
           setIsLocked(false);
         }
@@ -106,6 +111,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   // Terminate session
   const logout = useCallback(() => {
+    if (typeof sessionStorage !== 'undefined') {
+      sessionStorage.removeItem('ruralcare_active_session');
+    }
     setIsAuthenticated(false);
     setIsLocked(false);
   }, []);
@@ -155,6 +163,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setIsAuthenticated(true);
       setIsLocked(false);
       lastActivityRef.current = Date.now();
+
+      if (typeof sessionStorage !== 'undefined' && device?.userId) {
+        sessionStorage.setItem('ruralcare_active_session', device.userId);
+      }
 
       // Update lastLoginAt
       if (device) {
@@ -220,6 +232,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     };
 
     setClinician(profile);
+    if (typeof sessionStorage !== 'undefined') {
+      sessionStorage.setItem('ruralcare_active_session', newState.userId);
+    }
     setIsAuthenticated(true);
     setIsLocked(false);
     lastActivityRef.current = Date.now();
