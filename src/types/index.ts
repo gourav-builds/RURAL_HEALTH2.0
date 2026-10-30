@@ -75,6 +75,26 @@ export interface SyncCursor {
   updatedAt: string;
 }
 
+export type ClinicianRole = 'doctor' | 'nurse' | 'health_worker' | 'admin';
+
+export interface ClinicianProfile {
+  id: string;
+  name: string;
+  role: ClinicianRole;
+  pinSalt: string;      // Cryptographic salt
+  pinHash: string;      // Salted SHA-256 hash of PIN
+  clinicName?: string;
+  createdAt: string;
+  lastLoginAt?: string;
+}
+
+export interface AuthSession {
+  clinician: ClinicianProfile;
+  authenticatedAt: number;
+  expiresAt: number;
+  isLocked: boolean;
+}
+
 export interface DeviceState {
   id: 'singleton';
   deviceId: string;
@@ -82,12 +102,18 @@ export interface DeviceState {
   userId: string;
   displayName: string;
   enrolledAt: string;
-  // M2 fields (optional in M1):
+  clinicName?: string;
+  role?: ClinicianRole;
+  pinSalt?: string;
+  pinHash?: string;
+  lastLoginAt?: string;
+  // M2 fields:
   publicKey?: string;
   encryptedPrivateKey?: string;
   syncLockOwner: string | null;
   syncLockExpiry: string | null;
 }
+
 
 export interface ConflictRecord {
   id: string;

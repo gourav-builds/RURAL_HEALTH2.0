@@ -16,6 +16,7 @@ interface DeviceContextValue {
   provisionDevice: (displayName: string) => Promise<void>;
   clearDevice: () => Promise<void>;
   refreshStorageInfo: () => Promise<void>;
+  reloadDevice: () => Promise<void>;
 }
 
 const DeviceContext = createContext<DeviceContextValue | null>(null);
@@ -61,6 +62,11 @@ export function DeviceProvider({ children }: { children: React.ReactNode }) {
     setDevice(null);
   }, []);
 
+  const reloadDevice = useCallback(async () => {
+    const state = await db.deviceState.get('singleton');
+    setDevice(state ?? null);
+  }, []);
+
   const value: DeviceContextValue = {
     device,
     storageInfo,
@@ -69,6 +75,7 @@ export function DeviceProvider({ children }: { children: React.ReactNode }) {
     provisionDevice,
     clearDevice,
     refreshStorageInfo,
+    reloadDevice,
   };
 
   return <DeviceContext.Provider value={value}>{children}</DeviceContext.Provider>;

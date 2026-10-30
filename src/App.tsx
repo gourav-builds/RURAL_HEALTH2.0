@@ -1,12 +1,17 @@
-/** Main application router */
+/** Main application router with Auth & Device Security Gates */
 import React from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { DeviceProvider, useDevice } from '@/context/DeviceContext';
+import { AuthProvider, useAuth } from '@/context/AuthContext';
 import { SyncProvider } from '@/context/SyncContext';
+import { ToastProvider } from '@/context/ToastContext';
+import { ToastContainer } from '@/components/ToastContainer';
+import { LockScreen } from '@/components/LockScreen';
 import { AppLayout } from '@/components/AppLayout';
 
 // Screens
 import { SetupScreen }                  from '@/screens/SetupScreen';
+import { LoginScreen }                  from '@/screens/LoginScreen';
 import { DashboardScreen }              from '@/screens/DashboardScreen';
 import { PatientsScreen }               from '@/screens/PatientsScreen';
 import { PatientRegistrationScreen }    from '@/screens/PatientRegistrationScreen';
@@ -17,11 +22,14 @@ import { SyncCenterScreen }             from '@/screens/SyncCenterScreen';
 import { ConflictResolutionScreen }     from '@/screens/ConflictResolutionScreen';
 import { SettingsScreen }               from '@/screens/SettingsScreen';
 
-/** Gate: redirect to /setup until device is provisioned */
-function RequireDevice({ children }: { children: React.ReactNode }) {
-  const { isLoading, isSetupComplete } = useDevice();
-  if (isLoading) return <AppLoader />;
+/** Gate: redirect to /setup if device un-enrolled, or /login if unauthenticated */
+function RequireAuth({ children }: { children: React.ReactNode }) {
+  const { isLoading: deviceLoading, isSetupComplete } = useDevice();
+  const { isLoading: authLoading, isAuthenticated } = useAuth();
+
+  if (deviceLoading || authLoading) return <AppLoader />;
   if (!isSetupComplete) return <Navigate to="/setup" replace />;
+  if (!isAuthenticated) return <Navigate to="/login" replace />;
   return <>{children}</>;
 }
 
@@ -29,8 +37,8 @@ function AppLoader() {
   return (
     <div className="min-h-screen bg-surface flex items-center justify-center">
       <div className="flex flex-col items-center gap-4">
-        <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-brand-500 to-sky-400 animate-pulse" />
-        <p className="text-slate-400 text-sm">Loading RuralCare…</p>
+        <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-cyan-500 via-sky-600 to-indigo-600 animate-pulse shadow-xl shadow-cyan-950" />
+        <p className="text-slate-400 text-sm font-mono tracking-wide">Loading RuralCare Workstation…</p>
       </div>
     </div>
   );
@@ -39,49 +47,51 @@ function AppLoader() {
 function AppRoutes() {
   return (
     <Routes>
-      {/* Setup — no auth required */}
+      {/* First-time setup & provisioning */}
       <Route path="/setup" element={<SetupScreen />} />
+
+      {/* Clinical Station PIN Login */}
+      <Route path="/login" element={<LoginScreen />} />
 
       {/* Protected routes inside AppLayout */}
       <Route element={
-        <RequireDevice>
+        <RequireAuth>
           <AppLayout />
-        </RequireDevice>
+        </RequireAuth>
       }>
         <Route index element={<Navigate to="/dashboard" replace />} />
-        <Route path="/dashboard"            element={<DashboardScreen />} />
-        <Route path="/patients"             element={<PatientsScreen />} />
-        <Route path="/patients/new"         element={<PatientRegistrationScreen />} />
-        <Route path="/patients/:id"         element={<PatientProfileScreen />} />
-        <Route path="/patients/:id/edit"    element={<PatientRegistrationScreen />} />
-        <Route path="/consultations"        element={<Navigate to="/patients" replace />} />
-        <Route path="/consultations/new"    element={<ConsultationEditorScreen />} />
-        <Route path="/consultations/:id"    element={<ConsultationDetailScreen />} />
+        <Route path="/dashboard"              element={<DashboardScreen />} />
+        <Route path="/patients"               element={<PatientsScreen />} />
+        <Route path="/patients/new"           element={<PatientRegistrationScreen />} />
+        <Route path="/patients/:id"           element={<PatientProfileScreen />} />
+        <Route path="/patients/:id/edit"      element={<PatientRegistrationScreen />} />
+        <Route path="/consultations"          element={<Navigate to="/patients" replace />} />
+        <Route path="/consultations/new"      element={<ConsultationEditorScreen />} />
+        <Route path="/consultations/:id"      element={<ConsultationDetailScreen />} />
         <Route path="/consultations/:id/edit" element={<ConsultationEditorScreen />} />
-        <Route path="/sync"                 element={<SyncCenterScreen />} />
-        <Route path="/conflicts/:id"        element={<ConflictResolutionScreen />} />
-        <Route path="/settings"             element={<SettingsScreen />} />
-        <Route path="*"                     element={<Navigate to="/dashboard" replace />} />
+        <Route path="/sync"                   element={<SyncCenterScreen />} />
+        <Route path="/conflicts/:id"          element={<ConflictResolutionScreen />} />
+        <Route path="/settings"               element={<SettingsScreen />} />
+        <Route path="*"                       element={<Navigate to="/dashboard" replace />} />
       </Route>
     </Routes>
   );
 }
 
-import { ToastProvider } from '@/context/ToastContext';
-import { ToastContainer } from '@/components/ToastContainer';
-
 export function App() {
   return (
     <BrowserRouter>
       <DeviceProvider>
-        <SyncProvider>
-          <ToastProvider>
-            <AppRoutes />
-            <ToastContainer />
-          </ToastProvider>
-        </SyncProvider>
+        <AuthProvider>
+          <SyncProvider>
+            <ToastProvider>
+              <AppRoutes />
+              <ToastContainer />
+              <LockScreen />
+            </ToastProvider>
+          </SyncProvider>
+        </AuthProvider>
       </DeviceProvider>
     </BrowserRouter>
   );
 }
-

@@ -41,6 +41,25 @@ export async function sha256Hex(input: string): Promise<string> {
   return Array.from(new Uint8Array(buffer), b => b.toString(16).padStart(2, '0')).join('');
 }
 
+/** Generate 16-byte cryptographically secure random salt */
+export function generateSalt(): string {
+  const bytes = new Uint8Array(16);
+  crypto.getRandomValues(bytes);
+  return Array.from(bytes, b => b.toString(16).padStart(2, '0')).join('');
+}
+
+/** Compute salted cryptographic hash for PIN / Password */
+export async function hashPin(pin: string, salt: string): Promise<string> {
+  return sha256Hex(`ruralcare:${salt}:${pin}:clinical_security`);
+}
+
+/** Verify PIN against stored salt and hash */
+export async function verifyPin(pin: string, salt: string, expectedHash: string): Promise<boolean> {
+  const computed = await hashPin(pin, salt);
+  return computed === expectedHash;
+}
+
+
 /** ISO-8601 timestamp string */
 export const now = (): string => new Date().toISOString();
 

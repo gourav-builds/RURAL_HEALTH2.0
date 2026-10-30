@@ -2,13 +2,13 @@ import { useState, useEffect } from 'react';
 import { useLocation, Link } from 'react-router-dom';
 import { useSync } from '@/context/SyncContext';
 import { useDevice } from '@/context/DeviceContext';
+import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/context/ToastContext';
 import { CommandPalette } from '@/components/CommandPalette';
 import {
   WifiIcon, WifiOffIcon, RefreshIcon, SearchIcon,
-  AlertIcon,
+  AlertIcon, LockIcon, ShieldIcon,
 } from '@/components/Icons';
-
 
 const PAGE_TITLES: Record<string, string> = {
   '/dashboard':     'Clinical Dashboard',
@@ -21,6 +21,7 @@ const PAGE_TITLES: Record<string, string> = {
 export function TopBar() {
   const { isOnline, isSyncing, pendingCount, conflictCount, triggerSync } = useSync();
   const { device } = useDevice();
+  const { clinician, lockStation } = useAuth();
   const { addToast } = useToast();
   const { pathname } = useLocation();
   const [isPaletteOpen, setIsPaletteOpen] = useState(false);
@@ -37,17 +38,20 @@ export function TopBar() {
     return () => clearInterval(interval);
   }, []);
 
-  // Global Ctrl+K / Cmd+K listener
+  // Global keyboard shortcuts: Ctrl+K (search), Ctrl+L (lock station)
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') {
         e.preventDefault();
         setIsPaletteOpen(prev => !prev);
+      } else if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'l') {
+        e.preventDefault();
+        lockStation();
       }
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, []);
+  }, [lockStation]);
 
   const handleQuickSync = async () => {
     addToast({
@@ -73,9 +77,8 @@ export function TopBar() {
               </span>
             </div>
             <p className="text-[11px] text-slate-400 hidden md:block">
-              {device?.orgId ? `Station Org: ${device.orgId.slice(0, 8)}` : 'Rural Health Outpost'} • {device?.displayName ?? 'Field Clinician'}
+              {device?.clinicName ?? (device?.orgId ? `Station Org: ${device.orgId.slice(0, 8)}` : 'Rural Health Outpost')} • {device?.displayName ?? 'Field Clinician'}
             </p>
-
           </div>
         </div>
 
@@ -92,8 +95,19 @@ export function TopBar() {
           </kbd>
         </button>
 
-        {/* Right: Telemetry, Clock, Sync trigger */}
+        {/* Right: Telemetry, Clock, Lock Station & Sync trigger */}
         <div className="flex items-center gap-3 flex-shrink-0">
+          {/* Clinician Role Badge */}
+          {clinician && (
+            <div className="hidden xl:flex items-center gap-2 px-2.5 py-1 rounded-xl bg-surface border border-surface-border text-xs">
+              <ShieldIcon className="w-3.5 h-3.5 text-cyan-400" />
+              <span className="font-semibold text-slate-200">{clinician.name}</span>
+              <span className="text-[10px] font-mono uppercase px-1.5 py-0.5 rounded bg-cyan-950 border border-cyan-800 text-cyan-300">
+                {clinician.role}
+              </span>
+            </div>
+          )}
+
           {/* Clinical Field Clock */}
           <div className="hidden lg:flex flex-col items-end text-right">
             <span className="text-xs font-mono font-semibold text-slate-200">{timeStr}</span>
@@ -143,6 +157,16 @@ export function TopBar() {
             aria-label="Sync"
           >
             <RefreshIcon className={`w-4 h-4 ${isSyncing ? 'animate-spin-slow text-cyan-400' : ''}`} />
+          </button>
+
+          {/* Lock Station Button */}
+          <button
+            onClick={lockStation}
+            className="btn-icon btn-sm btn-secondary text-slate-300 hover:text-cyan-400"
+            title="Lock Station (Ctrl+L) — Protects patient session immediately"
+            aria-label="Lock Station"
+          >
+            <LockIcon className="w-4 h-4" />
           </button>
         </div>
       </header>

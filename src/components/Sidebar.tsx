@@ -2,11 +2,12 @@ import React from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
 import {
   HomeIcon, UsersIcon, ClipboardIcon, RefreshIcon,
-  SettingsIcon, ShieldIcon,
-  HeartIcon, DatabaseIcon,
+  SettingsIcon,
+  HeartIcon, DatabaseIcon, LockIcon,
 } from '@/components/Icons';
 import { useSync } from '@/context/SyncContext';
 import { useDevice } from '@/context/DeviceContext';
+import { useAuth } from '@/context/AuthContext';
 import { formatBytes } from '@/utils';
 
 interface NavItem {
@@ -20,6 +21,7 @@ interface NavItem {
 export function Sidebar() {
   const { pendingCount, conflictCount } = useSync();
   const { device, storageInfo } = useDevice();
+  const { clinician, lockStation } = useAuth();
 
   const location = useLocation();
 
@@ -121,17 +123,28 @@ export function Sidebar() {
           </div>
         </div>
 
-        {/* Clinician Node Identity */}
+        {/* Clinician Node Identity & Quick Lock */}
         {device && (
-          <div className="flex items-center gap-2.5 px-3 py-2 rounded-xl bg-surface border border-surface-border">
-            <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-brand-600 to-indigo-600 flex items-center justify-center text-white text-xs font-bold font-mono flex-shrink-0">
+          <div className="flex items-center gap-2.5 px-3 py-2.5 rounded-xl bg-surface border border-surface-border">
+            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-cyan-600 to-indigo-700 flex items-center justify-center text-white text-xs font-bold font-mono flex-shrink-0 shadow-inner">
               {device.displayName ? device.displayName[0] : 'C'}
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-xs font-semibold text-white truncate leading-tight">{device.displayName}</p>
-              <p className="text-[10px] font-mono text-slate-500 truncate">{device.deviceId.slice(0, 8)}</p>
+              <div className="flex items-center gap-1.5">
+                <p className="text-xs font-bold text-white truncate leading-tight">{device.displayName}</p>
+              </div>
+              <p className="text-[10px] font-mono text-cyan-400 capitalize truncate">
+                {clinician?.role ?? (device.role || 'Doctor')}
+              </p>
             </div>
-            <ShieldIcon className="w-4 h-4 text-cyan-400/80 flex-shrink-0" />
+            <button
+              onClick={lockStation}
+              className="p-1.5 rounded-lg text-slate-400 hover:text-cyan-300 hover:bg-surface-hover transition"
+              title="Lock Workstation (Ctrl+L)"
+              aria-label="Lock Workstation"
+            >
+              <LockIcon className="w-3.5 h-3.5" />
+            </button>
           </div>
         )}
       </div>
