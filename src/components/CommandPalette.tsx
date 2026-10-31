@@ -96,6 +96,46 @@ export function CommandPalette({ isOpen, onClose }: CommandPaletteProps) {
       },
     },
     {
+      id: 'agent_triage',
+      label: 'Run Clinical Triage Audit (AI Agent)',
+      category: 'Autonomous Agent',
+      icon: ClipboardIcon,
+      action: () => {
+        onClose();
+        window.dispatchEvent(new CustomEvent('open-agent-modal', { detail: { tab: 'agent', playbookId: 'triage_audit' } }));
+      },
+    },
+    {
+      id: 'agent_maternal',
+      label: 'Screen High-Risk Maternal Cohort (AI Agent)',
+      category: 'Autonomous Agent',
+      icon: UsersIcon,
+      action: () => {
+        onClose();
+        window.dispatchEvent(new CustomEvent('open-agent-modal', { detail: { tab: 'agent', playbookId: 'maternal_screening' } }));
+      },
+    },
+    {
+      id: 'agent_sync',
+      label: 'Audit & Reconcile Offline Outbox (AI Agent)',
+      category: 'Autonomous Agent',
+      icon: RefreshIcon,
+      action: () => {
+        onClose();
+        window.dispatchEvent(new CustomEvent('open-agent-modal', { detail: { tab: 'agent', playbookId: 'sync_integrity_check' } }));
+      },
+    },
+    {
+      id: 'agent_open',
+      label: 'Open Autonomous Clinical Agent Console',
+      category: 'Autonomous Agent',
+      icon: SettingsIcon,
+      action: () => {
+        onClose();
+        window.dispatchEvent(new CustomEvent('open-agent-modal', { detail: { tab: 'agent' } }));
+      },
+    },
+    {
       id: 'settings',
       label: 'Open workspace settings',
       category: 'System',

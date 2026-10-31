@@ -1,7 +1,7 @@
 import { CareSculpture } from '@/components/CareSculpture';
 import { PremiumMetric, EmptyIllustration } from '@/components/PremiumMotion';
 import { ActivityChart, weekValues } from '@/components/ClinicalVisuals';
-import { UserPlus, Stethoscope, Search, ClipboardCheck } from 'lucide-react';
+import { UserPlus, Stethoscope, Search, ClipboardCheck, Bot } from 'lucide-react';
 import { useVisualConnection } from '@/components/VisualConnection';
 import { Link } from 'react-router-dom';
 import { useLiveQuery } from 'dexie-react-hooks';
@@ -45,6 +45,64 @@ export function DashboardScreen() {
       </section>
       <section className="panel"><div className="panel-heading"><div><h2>Recent consultations</h2><p>Pick up where care left off.</p></div><Link to="/consultations" className="text-link">View all <ChevronRightIcon className="w-4 h-4" /></Link></div>{activity.length ? <div className="activity-list">{activity.map(c => { const p = patients?.find(patient => patient.id === c.patientId); return <Link to={`/consultations/${c.id}`} key={c.id} className="activity-row"><span className="avatar-ring compact-avatar">{p ? `${p.firstName[0]}${p.lastName[0]}` : "RC"}</span><div className="flex-1 min-w-0"><strong>{c.chiefComplaint}</strong><small>{p ? `${p.firstName} ${p.lastName}` : 'Patient record'} · {formatDate(c.updatedAt)}</small></div><ClinicalBadge status={c.clinicalStatus} /></Link>; })}</div> : <div className="quiet-empty"><ClipboardIcon className="w-6 h-6" /><div><strong>A fresh start for better care</strong><p>Your consultations will appear here as you document visits.</p></div><Link to="/consultations/new" aria-label="Start your first consultation"><ChevronRightIcon className="w-5 h-5" /></Link></div>}</section>
     </div><div className="dashboard-aside">
+      <section className="panel agent-panel p-4 bg-gradient-to-br from-cyan-900/10 via-sky-900/5 to-indigo-900/10 border border-cyan-300/50 rounded-2xl shadow-xs">
+        <div className="flex items-center justify-between mb-2">
+          <div className="flex items-center gap-2">
+            <span className="w-8 h-8 rounded-xl bg-cyan-600 text-white flex items-center justify-center font-bold text-sm shadow-sm">
+              <Bot size={17} />
+            </span>
+            <div>
+              <h3 className="font-bold text-ink text-sm">Autonomous Clinical Agent</h3>
+              <p className="text-[11px] text-slate-500 flex items-center gap-1 font-sans">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                8 Offline Tools Active
+              </p>
+            </div>
+          </div>
+          <button
+            onClick={() => window.dispatchEvent(new CustomEvent('open-agent-modal', { detail: { tab: 'agent' } }))}
+            className="text-[11px] font-bold text-cyan-800 hover:text-cyan-950 flex items-center gap-1"
+          >
+            <span>Open Studio</span>
+            <ChevronRightIcon className="w-3.5 h-3.5" />
+          </button>
+        </div>
+        <p className="text-xs text-slate-600 mb-3 font-sans leading-relaxed">
+          Autonomously audits local consultations, monitors maternal & chronic cohorts, and reconciles outbox hashes completely offline.
+        </p>
+        <div className="space-y-1.5">
+          <button
+            onClick={() => window.dispatchEvent(new CustomEvent('open-agent-modal', { detail: { tab: 'agent', playbookId: 'triage_audit' } }))}
+            className="w-full py-1.5 px-2.5 rounded-lg bg-surface hover:bg-cyan-50 border border-surface-border hover:border-cyan-300 text-left flex items-center justify-between text-xs transition group"
+          >
+            <span className="font-medium text-slate-700 group-hover:text-cyan-900 flex items-center gap-1.5">
+              <span className="w-1.5 h-1.5 rounded-full bg-rose-500" />
+              <span>Run Emergency Triage Audit</span>
+            </span>
+            <span className="text-[10px] text-slate-400 group-hover:text-cyan-700 font-mono">Execute ➔</span>
+          </button>
+          <button
+            onClick={() => window.dispatchEvent(new CustomEvent('open-agent-modal', { detail: { tab: 'agent', playbookId: 'maternal_screening' } }))}
+            className="w-full py-1.5 px-2.5 rounded-lg bg-surface hover:bg-cyan-50 border border-surface-border hover:border-cyan-300 text-left flex items-center justify-between text-xs transition group"
+          >
+            <span className="font-medium text-slate-700 group-hover:text-cyan-900 flex items-center gap-1.5">
+              <span className="w-1.5 h-1.5 rounded-full bg-amber-500" />
+              <span>Screen High-Risk Cohorts</span>
+            </span>
+            <span className="text-[10px] text-slate-400 group-hover:text-cyan-700 font-mono">Execute ➔</span>
+          </button>
+          <button
+            onClick={() => window.dispatchEvent(new CustomEvent('open-agent-modal', { detail: { tab: 'agent', playbookId: 'sync_integrity_check' } }))}
+            className="w-full py-1.5 px-2.5 rounded-lg bg-surface hover:bg-cyan-50 border border-surface-border hover:border-cyan-300 text-left flex items-center justify-between text-xs transition group"
+          >
+            <span className="font-medium text-slate-700 group-hover:text-cyan-900 flex items-center gap-1.5">
+              <span className="w-1.5 h-1.5 rounded-full bg-indigo-500" />
+              <span>Audit Outbox Hash Integrity</span>
+            </span>
+            <span className="text-[10px] text-slate-400 group-hover:text-cyan-700 font-mono">Execute ➔</span>
+          </button>
+        </div>
+      </section>
       <section className="review-panel"><div className="review-heading"><span className="metric-icon peach"><ClockIcon className="w-5 h-5" /></span><span className="eyebrow">CARE FOLLOW-THROUGH</span></div><h2>{reviews.length ? `${reviews.length} consultation${reviews.length === 1 ? '' : 's'} to review` : 'A little attention. A lasting difference.'}</h2><p>{reviews.length ? 'Complete your clinical reviews and keep each patient’s record moving forward.' : 'Review clinical notes in one place, with every detail ready for your attention.'}</p><Link to="/consultations?status=awaiting_review" className="review-link">{reviews.length ? 'Review consultations' : 'Open review workspace'}<ChevronRightIcon className="w-4 h-4" /></Link></section>
       <section className="panel connection-panel"><div className="panel-heading"><h2>Your workspace</h2><span className="live-dot" /></div><div className="workspace-status"><span>Internet connection</span><strong>{(preview ?? isOnline) ? 'Connected' : 'Offline'}{preview!==null?' · preview':''}</strong></div><div className="workspace-status"><span>Changes awaiting upload</span><strong>{pendingCount}</strong></div><div className="workspace-status"><span>Conflicts to review</span><strong>{conflictCount}</strong></div><div className="local-note"><CheckIcon className="w-4 h-4" /><p>Work locally, with confidence.<span>Server synchronization is not yet connected.</span></p></div><Link to="/sync" className="text-link">Manage sync queue <ChevronRightIcon className="w-4 h-4" /></Link></section>
       <div className="care-quote"><HeartIcon className="w-5 h-5" /><p>Great care begins with<br />a little more connection.</p><span>THE RURALCARE PROMISE</span></div>
