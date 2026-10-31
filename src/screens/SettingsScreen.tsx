@@ -1,3 +1,4 @@
+import { PresentationSeedCard } from '@/components/PresentationSeedCard';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useDevice } from '@/context/DeviceContext';
@@ -42,19 +43,19 @@ export function SettingsScreen() {
 
   const Row = ({ label, value, mono = false }: { label: string; value: string; mono?: boolean }) => (
     <div className="flex justify-between items-center py-2.5 border-b border-surface-border last:border-0">
-      <span className="text-slate-400 text-sm">{label}</span>
-      <span className={`text-white text-sm ${mono ? 'font-mono text-xs' : ''}`}>{value}</span>
+      <span className="text-slate-600 text-sm">{label}</span>
+      <span className={`text-ink text-sm ${mono ? 'font-sans text-xs' : ''}`}>{value}</span>
     </div>
   );
 
   return (
-    <div className="space-y-6 animate-fade-in max-w-2xl">
-      <h2 className="section-title text-xl">Settings</h2>
+    <div className="space-y-6 animate-fade-in settings-page">
+      <header className="page-heading"><div><p className="eyebrow">MAKE ROOM FOR BETTER CARE</p><h1>Workspace settings<span className="greeting-dot">.</span></h1><p>Your clinic, your device, your preferences.</p></div></header>
 
       {/* Device info */}
       <div className="card space-y-1">
-        <h3 className="font-semibold text-white text-sm flex items-center gap-2 mb-3">
-          <ShieldIcon className="w-4 h-4 text-brand-400" /> Device
+        <h3 className="font-semibold text-ink text-sm flex items-center gap-2 mb-3">
+          <ShieldIcon className="w-4 h-4 text-brand-700" /> Device
         </h3>
         {device ? (
           <>
@@ -71,8 +72,8 @@ export function SettingsScreen() {
       {/* Storage */}
       <div className="card space-y-1">
         <div className="flex items-center justify-between mb-3">
-          <h3 className="font-semibold text-white text-sm flex items-center gap-2">
-            <DatabaseIcon className="w-4 h-4 text-brand-400" /> Storage
+          <h3 className="font-semibold text-ink text-sm flex items-center gap-2">
+            <DatabaseIcon className="w-4 h-4 text-brand-700" /> Storage
           </h3>
           <button onClick={refreshStorageInfo} className="btn-ghost btn-sm text-xs">Refresh</button>
         </div>
@@ -87,7 +88,7 @@ export function SettingsScreen() {
             {/* Usage bar */}
             {storageInfo.percentUsed !== null && (
               <div className="pt-2">
-                <div className="flex justify-between text-xs text-slate-400 mb-1">
+                <div className="flex justify-between text-xs text-slate-600 mb-1">
                   <span>Storage used</span>
                   <span>{storageInfo.percentUsed}%</span>
                 </div>
@@ -122,8 +123,8 @@ export function SettingsScreen() {
 
       {/* Feature status */}
       <div className="card space-y-2">
-        <h3 className="font-semibold text-white text-sm flex items-center gap-2 mb-3">
-          <SettingsIcon className="w-4 h-4 text-brand-400" /> Feature Status
+        <h3 className="font-semibold text-ink text-sm flex items-center gap-2 mb-3">
+          <SettingsIcon className="w-4 h-4 text-brand-700" /> Feature Status
         </h3>
         {[
           { feature: 'Offline patient records',     status: 'Active',     m: 1 },
@@ -138,17 +139,18 @@ export function SettingsScreen() {
           { feature: 'History search',               status: 'Milestone 6', m: 6 },
         ].map(({ feature, status, m }) => (
           <div key={feature} className="flex justify-between py-1.5 border-b border-surface-border last:border-0">
-            <span className="text-slate-400 text-sm">{feature}</span>
-            <span className={`text-xs font-medium ${m === 1 ? 'text-green-400' : 'text-slate-500'}`}>{status}</span>
+            <span className="text-slate-600 text-sm">{feature}</span>
+            <span className={`text-xs font-medium ${m === 1 ? 'text-green-700' : 'text-slate-500'}`}>{status}</span>
           </div>
         ))}
       </div>
 
+      <PresentationSeedCard/>
       {/* Danger zone */}
-      <div className="card border-red-900/50">
+      <div className="card border-red-200/50">
         <button
           onClick={() => setShowDanger(d => !d)}
-          className="flex items-center gap-2 text-red-400 font-semibold text-sm w-full text-left"
+          className="flex items-center gap-2 text-red-700 font-semibold text-sm w-full text-left"
         >
           <AlertIcon className="w-4 h-4" />
           Danger zone {showDanger ? '▲' : '▼'}
@@ -159,7 +161,7 @@ export function SettingsScreen() {
               <AlertIcon className="w-3.5 h-3.5 flex-shrink-0" />
               <p>These actions are irreversible. Unsynced patient data will be permanently lost.</p>
             </div>
-            {clearError && <p className="text-red-400 text-xs">{clearError}</p>}
+            {clearError && <p className="text-red-700 text-xs">{clearError}</p>}
             <button
               onClick={handleClearData}
               disabled={clearing}
@@ -181,7 +183,7 @@ export function SettingsScreen() {
 
       {/* M2–M6 placeholders */}
       <div className="card-sm border-dashed border-surface-border bg-surface text-xs text-slate-500 space-y-1">
-        <p className="font-medium text-slate-400">Coming in future milestones:</p>
+        <p className="font-medium text-slate-600">Coming in future milestones:</p>
         <p>🔐 Device PIN lock &amp; biometric unlock (M2)</p>
         <p>🌐 Language packs &amp; model downloads (M4)</p>
         <p>🤖 AI model management &amp; storage (M5)</p>

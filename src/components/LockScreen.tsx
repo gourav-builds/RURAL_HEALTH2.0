@@ -61,27 +61,27 @@ export function LockScreen() {
     >
       <div className="w-full max-w-sm card bg-surface-card border border-surface-borderLight p-6 shadow-2xl space-y-5 animate-slide-up text-center">
         {/* Lock Icon Banner */}
-        <div className="w-14 h-14 rounded-2xl bg-cyan-950/80 border border-cyan-500/50 flex items-center justify-center text-cyan-400 mx-auto shadow-lg shadow-cyan-950/50">
+        <div className="w-14 h-14 rounded-2xl bg-cyan-50/80 border border-cyan-500/50 flex items-center justify-center text-cyan-700 mx-auto shadow-lg shadow-slate-200/40">
           <LockIcon className="w-7 h-7" />
         </div>
 
         <div>
-          <h2 className="text-xl font-extrabold text-white tracking-tight">Station Locked</h2>
-          <p className="text-xs text-slate-400 mt-1 font-mono">
+          <h2 className="text-xl font-extrabold text-ink tracking-tight">Station Locked</h2>
+          <p className="text-xs text-slate-600 mt-1 font-sans">
             Inactivity security timeout active (HIPAA Privacy Protection)
           </p>
         </div>
 
         {/* Clinician Pill */}
         <div className="p-2.5 rounded-xl bg-surface border border-surface-border flex items-center gap-3 text-left">
-          <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-cyan-600 to-indigo-700 flex items-center justify-center text-white font-bold font-mono text-sm flex-shrink-0">
+          <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-cyan-100 to-indigo-100 flex items-center justify-center text-ink font-bold font-sans text-sm flex-shrink-0">
             {clinician?.name ? clinician.name[0] : 'C'}
           </div>
           <div className="flex-1 min-w-0">
-            <p className="text-xs font-bold text-white truncate">{clinician?.name ?? 'Clinician'}</p>
-            <p className="text-[10px] text-cyan-400 font-mono capitalize">{clinician?.role ?? 'Doctor'}</p>
+            <p className="text-xs font-bold text-ink truncate">{clinician?.name ?? 'Clinician'}</p>
+            <p className="text-xs text-cyan-700 font-sans capitalize">{clinician?.role ?? 'Doctor'}</p>
           </div>
-          <ShieldIcon className="w-4 h-4 text-slate-400" />
+          <ShieldIcon className="w-4 h-4 text-slate-600" />
         </div>
 
         {/* PIN input */}
@@ -109,7 +109,7 @@ export function LockScreen() {
                 setError('');
               }}
               disabled={isLockedOut || isUnlocking}
-              className="input text-center text-xl tracking-[0.5em] font-mono font-bold bg-surface"
+              className="input text-center text-xl tracking-[0.5em] font-sans font-bold bg-surface"
               placeholder="••••••"
               autoFocus
             />
@@ -130,7 +130,7 @@ export function LockScreen() {
                 type="button"
                 onClick={() => handleDigit(d)}
                 disabled={isLockedOut || isUnlocking}
-                className="py-2.5 rounded-xl bg-surface hover:bg-surface-hover text-white font-mono text-base font-bold border border-surface-border transition"
+                className="py-2.5 rounded-xl bg-surface hover:bg-surface-hover text-ink font-sans text-base font-bold border border-surface-border transition"
               >
                 {d}
               </button>
@@ -138,7 +138,7 @@ export function LockScreen() {
             <button
               type="button"
               onClick={() => setPin('')}
-              className="py-2.5 rounded-xl bg-surface hover:bg-surface-hover text-slate-400 font-mono text-xs border border-surface-border"
+              className="py-2.5 rounded-xl bg-surface hover:bg-surface-hover text-slate-600 font-sans text-xs border border-surface-border"
             >
               Clear
             </button>
@@ -147,14 +147,14 @@ export function LockScreen() {
               type="button"
               onClick={() => handleDigit('0')}
               disabled={isLockedOut || isUnlocking}
-              className="py-2.5 rounded-xl bg-surface hover:bg-surface-hover text-white font-mono text-base font-bold border border-surface-border transition"
+              className="py-2.5 rounded-xl bg-surface hover:bg-surface-hover text-ink font-sans text-base font-bold border border-surface-border transition"
             >
               0
             </button>
             <button
               type="button"
               onClick={() => setPin(prev => prev.slice(0, -1))}
-              className="py-2.5 rounded-xl bg-surface hover:bg-surface-hover text-slate-400 font-mono text-xs border border-surface-border"
+              className="py-2.5 rounded-xl bg-surface hover:bg-surface-hover text-slate-600 font-sans text-xs border border-surface-border"
             >
               ⌫
             </button>
@@ -168,13 +168,25 @@ export function LockScreen() {
             >
               {isUnlocking ? 'Unlocking…' : 'Unlock Station'}
             </button>
-            <button
-              type="button"
-              onClick={logout}
-              className="btn-ghost btn-sm w-full text-xs text-slate-400 hover:text-red-400"
-            >
-              Sign Out & Switch Clinician
-            </button>
+            <div className="flex items-center justify-between pt-1">
+              <button
+                type="button"
+                onClick={() => {
+                  logout();
+                  window.location.href = '/forgot-password';
+                }}
+                className="text-xs text-cyan-700 hover:text-cyan-800 font-sans font-medium"
+              >
+                Forgot PIN?
+              </button>
+              <button
+                type="button"
+                onClick={logout}
+                className="text-xs text-slate-600 hover:text-red-700 font-sans"
+              >
+                Sign Out
+              </button>
+            </div>
           </div>
         </form>
       </div>

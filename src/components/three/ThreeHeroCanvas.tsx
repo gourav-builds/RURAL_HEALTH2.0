@@ -262,8 +262,8 @@ export function ThreeHeroCanvas({ isOnline, isSyncing, pendingCount = 0 }: Three
         )}
       </div>
       <div className="absolute bottom-3 right-3 text-right pointer-events-none opacity-60 group-hover:opacity-100 transition-opacity">
-        <p className="text-[10px] font-mono text-slate-400 uppercase tracking-widest">Interactive 3D Constellation</p>
-        <p className="text-[11px] text-cyan-400/90 font-mono">Move / Click to pulse</p>
+        <p className="text-[10px] font-sans text-slate-400 uppercase tracking-widest">Interactive 3D Constellation</p>
+        <p className="text-[11px] text-cyan-400/90 font-sans">Move / Click to pulse</p>
       </div>
     </div>
   );

@@ -1,3 +1,4 @@
+import { CareSculpture } from '@/components/CareSculpture';
 /** First-time setup / device provisioning screen with Clinician PIN & Role Setup */
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -31,6 +32,8 @@ export function SetupScreen() {
   const [role, setRole] = useState<ClinicianRole>('doctor');
   const [pin, setPin] = useState('');
   const [confirmPin, setConfirmPin] = useState('');
+  const [securityQuestion, setSecurityQuestion] = useState('What was your first clinical posting or facility?');
+  const [securityAnswer, setSecurityAnswer] = useState('');
   const [error, setError] = useState('');
   const [isProvisioning, setIsProvisioning] = useState(false);
 
@@ -65,6 +68,10 @@ export function SetupScreen() {
       setError('PINs do not match. Please verify your entry.');
       return;
     }
+    if (!securityAnswer.trim()) {
+      setError('Please provide an answer for your security recovery question');
+      return;
+    }
     next();
   };
 
@@ -85,7 +92,9 @@ export function SetupScreen() {
         displayName.trim(),
         role,
         pin,
-        clinicName.trim() || 'Rural Health Outpost'
+        clinicName.trim() || 'Rural Health Outpost',
+        securityQuestion.trim(),
+        securityAnswer.trim()
       );
       await reloadDevice();
       navigate('/dashboard', { replace: true });
@@ -99,7 +108,8 @@ export function SetupScreen() {
   };
 
   return (
-    <div className="min-h-screen bg-surface flex items-center justify-center p-4 relative overflow-hidden select-none">
+    <div className="auth-screen min-h-screen bg-surface flex items-center justify-center p-4 relative overflow-hidden select-none">
+      <aside className="auth-artwork"><span className="auth-brand">RuralCare<span>CARE WITHOUT BOUNDARIES</span></span><div><p className="hero-kicker">BUILT FOR THE PEOPLE WHO CARE</p><h2>Exceptional care.<br/><span>Everywhere.</span></h2><p>A calmer clinical workspace. A closer connection to your community.</p></div><CareSculpture/><footer>Offline-first. Patient-focused. Always within reach.</footer></aside>
       {/* Background glow effects */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <div className="absolute -top-40 -left-40 w-96 h-96 bg-cyan-600/20 rounded-full blur-3xl" />
@@ -109,11 +119,11 @@ export function SetupScreen() {
       <div className="relative w-full max-w-lg animate-fade-in">
         {/* Logo & Header */}
         <div className="text-center mb-6">
-          <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-tr from-cyan-500 via-sky-600 to-indigo-600 shadow-2xl shadow-cyan-900/60 mb-3 border border-white/20">
-            <HeartIcon className="w-8 h-8 text-white" />
+          <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-tr from-cyan-100 via-sky-100 to-indigo-100 shadow-2xl shadow-slate-200/40 mb-3 border border-white/20">
+            <HeartIcon className="w-8 h-8 text-ink" />
           </div>
-          <h1 className="text-2xl font-black text-white tracking-tight">RuralCare Workstation</h1>
-          <p className="text-slate-400 text-xs mt-0.5 font-mono">Offline-First Healthcare OS • Node Provisioning</p>
+          <h1 className="text-2xl font-black text-ink tracking-tight">RuralCare Workstation</h1>
+          <p className="text-slate-600 text-xs mt-0.5 font-sans">Care without boundaries • Set up your workspace</p>
         </div>
 
         {/* Step indicator */}
@@ -143,37 +153,37 @@ export function SetupScreen() {
         </div>
 
         {/* Card */}
-        <div className="card shadow-2xl shadow-black/50 border border-surface-borderLight p-6 bg-surface-card/95 backdrop-blur-md">
+        <div className="card shadow-2xl shadow-slate-200/40 border border-surface-borderLight p-6 bg-surface-card/95 backdrop-blur-md">
           <div className="flex items-center justify-between pb-3 border-b border-surface-border mb-4">
             <h2 className="section-title text-base">{STEPS[step].title}</h2>
-            <span className="text-[11px] font-mono text-slate-500">Step {step + 1} of {STEPS.length}</span>
+            <span className="text-xs font-sans text-slate-500">Step {step + 1} of {STEPS.length}</span>
           </div>
 
           {/* Step 0: Welcome */}
           {step === 0 && (
             <div className="space-y-4">
-              <p className="text-slate-300 text-sm leading-relaxed">
-                RuralCare works fully <strong className="text-cyan-400">without internet connectivity</strong>.
-                Patient records and consultation histories are stored directly in an encrypted
-                IndexedDB vault and synchronize safely once a network or peer mesh is detected.
+              <p className="text-slate-700 text-sm leading-relaxed">
+                RuralCare works fully <strong className="text-cyan-700">without internet connectivity</strong>.
+                Patient records and consultation histories are saved on this device.
+                Server synchronization is not connected yet.
               </p>
               <div className="space-y-2.5">
                 {[
-                  { icon: WifiOffIcon, label: '100% Offline Resilience', sub: 'Create, search, and edit records anywhere in the field' },
-                  { icon: ShieldIcon,  label: 'Salted Cryptographic Auth', sub: 'Zero-knowledge PIN protection with rate-limited cooldowns' },
-                  { icon: DatabaseIcon, label: 'Distributed Outbox Engine', sub: 'Conflict-safe Lamport timestamp sync and audit logs' },
+                  { icon: WifiOffIcon, label: 'Care, even offline', sub: 'Create, search, and edit records anywhere in the field' },
+                  { icon: ShieldIcon,  label: 'Your own clinical workspace', sub: 'PIN sign-in and automatic workstation locking' },
+                  { icon: DatabaseIcon, label: 'Every change accounted for', sub: 'A local queue keeps track of saved record changes' },
                 ].map(({ icon: Icon, label, sub }) => (
                   <div key={label} className="flex items-start gap-3 p-3 rounded-xl bg-surface border border-surface-border">
-                    <Icon className="w-5 h-5 text-cyan-400 mt-0.5 flex-shrink-0" />
+                    <Icon className="w-5 h-5 text-cyan-700 mt-0.5 flex-shrink-0" />
                     <div>
-                      <p className="text-xs font-bold text-white">{label}</p>
-                      <p className="text-[11px] text-slate-400 mt-0.5">{sub}</p>
+                      <p className="text-xs font-bold text-ink">{label}</p>
+                      <p className="text-xs text-slate-600 mt-0.5">{sub}</p>
                     </div>
                   </div>
                 ))}
               </div>
               <button onClick={next} className="btn-primary w-full mt-4 py-3 text-sm font-bold">
-                Begin Provisioning →
+                Set up your clinic →
               </button>
             </div>
           )}
@@ -181,7 +191,7 @@ export function SetupScreen() {
           {/* Step 1: Profile & Role */}
           {step === 1 && (
             <div className="space-y-4">
-              <p className="text-slate-300 text-xs">
+              <p className="text-slate-700 text-xs">
                 Configure your clinician profile and health post facility.
               </p>
 
@@ -221,17 +231,17 @@ export function SetupScreen() {
                       onClick={() => setRole(r.id)}
                       className={`p-3 rounded-xl text-left border transition-all ${
                         role === r.id
-                          ? 'bg-cyan-950/60 border-cyan-500/80 ring-1 ring-cyan-500/50'
+                          ? 'bg-cyan-50/60 border-cyan-500/80 ring-1 ring-cyan-500/50'
                           : 'bg-surface border-surface-border hover:bg-surface-hover'
                       }`}
                     >
                       <div className="flex items-center justify-between">
-                        <span className={`text-xs font-bold ${role === r.id ? 'text-cyan-300' : 'text-white'}`}>
+                        <span className={`text-xs font-bold ${role === r.id ? 'text-cyan-700' : 'text-ink'}`}>
                           {r.label}
                         </span>
-                        {role === r.id && <CheckIcon className="w-3.5 h-3.5 text-cyan-400" />}
+                        {role === r.id && <CheckIcon className="w-3.5 h-3.5 text-cyan-700" />}
                       </div>
-                      <p className="text-[10px] text-slate-400 mt-1 line-clamp-2 leading-tight">
+                      <p className="text-xs text-slate-600 mt-1 line-clamp-2 leading-tight">
                         {r.desc}
                       </p>
                     </button>
@@ -258,10 +268,10 @@ export function SetupScreen() {
           {/* Step 2: Security PIN */}
           {step === 2 && (
             <div className="space-y-4">
-              <div className="flex items-center gap-2.5 p-3 rounded-xl bg-cyan-950/40 border border-cyan-500/30">
-                <LockIcon className="w-5 h-5 text-cyan-400 flex-shrink-0" />
-                <p className="text-xs text-slate-300 leading-snug">
-                  Choose a <strong className="text-white">4 to 6-digit numeric PIN</strong>.
+              <div className="flex items-center gap-2.5 p-3 rounded-xl bg-cyan-50/40 border border-cyan-500/30">
+                <LockIcon className="w-5 h-5 text-cyan-700 flex-shrink-0" />
+                <p className="text-xs text-slate-700 leading-snug">
+                  Choose a <strong className="text-ink">4 to 6-digit numeric PIN</strong>.
                   This encrypts your local session and unlocks the tablet quickly during field shifts.
                 </p>
               </div>
@@ -278,7 +288,7 @@ export function SetupScreen() {
                       setPin(e.target.value.replace(/\D/g, ''));
                       setError('');
                     }}
-                    className="input text-center text-lg tracking-[0.4em] font-mono font-bold"
+                    className="input text-center text-lg tracking-[0.4em] font-sans font-bold"
                     placeholder="••••"
                     autoFocus
                   />
@@ -296,19 +306,60 @@ export function SetupScreen() {
                       setError('');
                     }}
                     onKeyDown={e => e.key === 'Enter' && validateSecurityStep()}
-                    className="input text-center text-lg tracking-[0.4em] font-mono font-bold"
+                    className="input text-center text-lg tracking-[0.4em] font-sans font-bold"
                     placeholder="••••"
                   />
                 </div>
               </div>
 
+              {/* Password / PIN Recovery Setup */}
+              <div className="p-3.5 rounded-xl bg-cyan-50/20 border border-cyan-500/30 space-y-3">
+                <div className="flex items-center gap-2">
+                  <ShieldIcon className="w-4 h-4 text-cyan-700" />
+                  <span className="text-xs font-bold text-ink">Forgot PIN / Password Recovery Setup</span>
+                </div>
+                <div className="space-y-2">
+                  <div className="field">
+                    <label className="label text-[11px]" htmlFor="setup-sec-q">Security Recovery Question</label>
+                    <select
+                      id="setup-sec-q"
+                      value={securityQuestion}
+                      onChange={e => setSecurityQuestion(e.target.value)}
+                      className="input text-xs"
+                    >
+                      <option value="What was your first clinical posting or facility?">What was your first clinical posting or facility?</option>
+                      <option value="What is the name of your medical/nursing academy?">What is the name of your medical/nursing academy?</option>
+                      <option value="What was the name of your childhood hometown?">What was the name of your childhood hometown?</option>
+                      <option value="What is your clinician registration or license serial?">What is your clinician registration or license serial?</option>
+                    </select>
+                  </div>
+                  <div className="field">
+                    <label className="label text-[11px]" htmlFor="setup-sec-a">Secret Recovery Answer</label>
+                    <input
+                      id="setup-sec-a"
+                      type="text"
+                      value={securityAnswer}
+                      onChange={e => {
+                        setSecurityAnswer(e.target.value);
+                        setError('');
+                      }}
+                      placeholder="e.g. Raigad District Hospital"
+                      className="input text-xs"
+                    />
+                    <span className="text-[10px] text-slate-600 block mt-0.5">
+                      Used to reset your access PIN offline if you forget your password.
+                    </span>
+                  </div>
+                </div>
+              </div>
+
               {/* Security features callout */}
-              <div className="p-3 rounded-xl bg-surface border border-surface-border space-y-1.5 text-[11px] text-slate-400 font-mono">
-                <div className="flex items-center gap-2 text-slate-300">
-                  <ShieldIcon className="w-3.5 h-3.5 text-cyan-400" />
+              <div className="p-3 rounded-xl bg-surface border border-surface-border space-y-1.5 text-xs text-slate-600 font-sans">
+                <div className="flex items-center gap-2 text-slate-700">
+                  <ShieldIcon className="w-3.5 h-3.5 text-cyan-700" />
                   <span className="font-semibold">Security Guardrails Activated:</span>
                 </div>
-                <ul className="list-disc list-inside space-y-0.5 text-slate-400 pl-1">
+                <ul className="list-disc list-inside space-y-0.5 text-slate-600 pl-1">
                   <li>PBKDF2/SHA-256 with 16-byte random cryptographic salt</li>
                   <li>Inactivity auto-lock after 10 minutes without interaction</li>
                   <li>30s cooldown penalty enforced after 5 failed PIN attempts</li>
@@ -334,21 +385,21 @@ export function SetupScreen() {
           {/* Step 3: Storage */}
           {step === 3 && (
             <div className="space-y-4">
-              <p className="text-slate-300 text-xs leading-relaxed">
+              <p className="text-slate-700 text-xs leading-relaxed">
                 RuralCare requests persistent local browser quota so clinical records, audio dictation,
                 and synchronization logs are protected from automatic browser eviction.
               </p>
               {storageInfo && (
-                <div className="p-3.5 rounded-xl bg-surface border border-surface-border text-xs space-y-2.5 font-mono">
+                <div className="p-3.5 rounded-xl bg-surface border border-surface-border text-xs space-y-2.5 font-sans">
                   <div className="flex justify-between">
-                    <span className="text-slate-400">Available Storage</span>
-                    <span className="text-white font-semibold">
+                    <span className="text-slate-600">Available Storage</span>
+                    <span className="text-ink font-semibold">
                       {storageInfo.available !== null ? `${(storageInfo.available / 1e9).toFixed(1)} GB Available` : 'System Managed'}
                     </span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-slate-400">Persistence Permission</span>
-                    <span className={storageInfo.isPersistent ? 'text-emerald-400 font-bold' : 'text-amber-400 font-bold'}>
+                    <span className="text-slate-600">Persistence Permission</span>
+                    <span className={storageInfo.isPersistent ? 'text-emerald-700 font-bold' : 'text-amber-700 font-bold'}>
                       {storageInfo.isPersistent ? '✓ Granted' : '⚠ Standard Cache'}
                     </span>
                   </div>
@@ -367,12 +418,12 @@ export function SetupScreen() {
           {step === 4 && (
             <div className="space-y-4">
               <div className="flex flex-col items-center py-2 gap-3">
-                <div className="w-14 h-14 rounded-2xl bg-emerald-950/80 border border-emerald-500/50 flex items-center justify-center shadow-lg shadow-emerald-950/40">
-                  <CheckIcon className="w-7 h-7 text-emerald-400" />
+                <div className="w-14 h-14 rounded-2xl bg-emerald-50/80 border border-emerald-500/50 flex items-center justify-center shadow-lg shadow-emerald-950/40">
+                  <CheckIcon className="w-7 h-7 text-emerald-700" />
                 </div>
                 <div className="text-center">
-                  <h3 className="text-base font-bold text-white">Workstation Ready for Service</h3>
-                  <p className="text-xs text-slate-400 mt-0.5">
+                  <h3 className="text-base font-bold text-ink">Workstation Ready for Service</h3>
+                  <p className="text-xs text-slate-600 mt-0.5">
                     Device configured with cryptographic offline authentication.
                   </p>
                 </div>
@@ -381,20 +432,20 @@ export function SetupScreen() {
               {/* Station Summary Pill */}
               <div className="p-3 rounded-xl bg-surface border border-surface-border space-y-2 text-xs">
                 <div className="flex justify-between items-center pb-2 border-b border-surface-border">
-                  <span className="text-slate-400">Clinician</span>
-                  <span className="text-white font-bold">{displayName}</span>
+                  <span className="text-slate-600">Clinician</span>
+                  <span className="text-ink font-bold">{displayName}</span>
                 </div>
                 <div className="flex justify-between items-center pb-2 border-b border-surface-border">
-                  <span className="text-slate-400">Role</span>
-                  <span className="text-cyan-300 font-mono capitalize">{role}</span>
+                  <span className="text-slate-600">Role</span>
+                  <span className="text-cyan-700 font-sans capitalize">{role}</span>
                 </div>
                 <div className="flex justify-between items-center pb-2 border-b border-surface-border">
-                  <span className="text-slate-400">Facility</span>
-                  <span className="text-slate-200">{clinicName}</span>
+                  <span className="text-slate-600">Facility</span>
+                  <span className="text-slate-800">{clinicName}</span>
                 </div>
                 <div className="flex justify-between items-center">
-                  <span className="text-slate-400">Authentication</span>
-                  <span className="text-emerald-400 font-mono text-[11px]">Salted PIN Protection (Active)</span>
+                  <span className="text-slate-600">Authentication</span>
+                  <span className="text-emerald-700 font-sans text-xs">Salted PIN Protection (Active)</span>
                 </div>
               </div>
 
@@ -408,7 +459,7 @@ export function SetupScreen() {
                   {isProvisioning ? 'Enrolling Station…' : 'Launch RuralCare →'}
                 </button>
               </div>
-              {error && <p className="text-red-400 text-xs text-center font-mono">{error}</p>}
+              {error && <p className="text-red-700 text-xs text-center font-sans">{error}</p>}
             </div>
           )}
         </div>

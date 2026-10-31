@@ -70,15 +70,15 @@ export function PatientRegistrationScreen() {
   }) => (
     <div className="field">
       <label className="label" htmlFor={id}>
-        {label}{required && <span className="text-red-400 ml-0.5">*</span>}
+        {label}{required && <span className="text-red-700 ml-0.5">*</span>}
       </label>
       {children}
-      {error && <p className="text-red-400 text-xs mt-1" role="alert">{error}</p>}
+      {error && <p className="text-red-700 text-xs mt-1" role="alert">{error}</p>}
     </div>
   );
 
   return (
-    <div className="space-y-6 animate-fade-in max-w-2xl">
+    <div className="clinical-detail-page space-y-6 animate-fade-in max-w-2xl">
       {/* Header */}
       <div className="flex items-center gap-3">
         <button onClick={() => navigate(-1)} className="btn-icon btn-ghost" aria-label="Go back">
@@ -97,8 +97,8 @@ export function PatientRegistrationScreen() {
         aria-label="Patient registration form"
       >
         <div className="card space-y-5">
-          <h3 className="font-semibold text-white flex items-center gap-2 text-sm">
-            <UserIcon className="w-4 h-4 text-brand-400" /> Personal Information
+          <h3 className="font-semibold text-ink flex items-center gap-2 text-sm">
+            <UserIcon className="w-4 h-4 text-brand-700" /> Personal Information
           </h3>
 
           <div className="grid sm:grid-cols-2 gap-4">
@@ -177,7 +177,7 @@ export function PatientRegistrationScreen() {
 
           <div className="divider" />
 
-          <h3 className="font-semibold text-white text-sm">Medical Information</h3>
+          <h3 className="font-semibold text-ink text-sm">Medical Information</h3>
 
           <div className="grid sm:grid-cols-2 gap-4">
             <Field id="bloodGroup" label="Blood group">

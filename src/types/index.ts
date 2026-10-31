@@ -107,7 +107,10 @@ export interface DeviceState {
   pinSalt?: string;
   pinHash?: string;
   lastLoginAt?: string;
-  // M2 fields:
+  // Security Recovery fields:
+  securityQuestion?: string;
+  securityAnswerHash?: string;
+  recoveryKeyHash?: string;
   publicKey?: string;
   encryptedPrivateKey?: string;
   syncLockOwner: string | null;

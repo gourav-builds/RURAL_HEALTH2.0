@@ -63,7 +63,7 @@ export function ConsultationDetailScreen() {
   if (!consultation) {
     return (
       <div className="card text-center py-12">
-        <p className="text-slate-400">Consultation not found.</p>
+        <p className="text-slate-600">Consultation not found.</p>
         <button onClick={() => navigate(-1)} className="btn-secondary mt-4">Go back</button>
       </div>
     );
@@ -75,11 +75,11 @@ export function ConsultationDetailScreen() {
     children: React.ReactNode;
   }) => (
     <div className="space-y-2">
-      <h3 className="flex items-center gap-2 text-sm font-semibold text-slate-300">
-        <Icon className="w-4 h-4 text-brand-400" />
+      <h3 className="flex items-center gap-2 text-sm font-semibold text-slate-700">
+        <Icon className="w-4 h-4 text-brand-700" />
         {title}
       </h3>
-      <div className="bg-surface rounded-xl p-4 border border-surface-border text-sm text-slate-300 leading-relaxed whitespace-pre-wrap">
+      <div className="bg-surface rounded-xl p-4 border border-surface-border text-sm text-slate-700 leading-relaxed whitespace-pre-wrap">
         {children}
       </div>
     </div>
@@ -99,7 +99,7 @@ export function ConsultationDetailScreen() {
         <div className="flex-1">
           <h2 className="section-title text-xl">{consultation.chiefComplaint}</h2>
           {patient && (
-            <Link to={`/patients/${patient.id}`} className="text-brand-400 hover:text-brand-300 text-sm flex items-center gap-1">
+            <Link to={`/patients/${patient.id}`} className="text-brand-700 hover:text-brand-700 text-sm flex items-center gap-1">
               <UserIcon className="w-3.5 h-3.5" />
               {patient.firstName} {patient.lastName} · {calcAge(patient.dateOfBirth)} yrs
             </Link>
@@ -202,7 +202,7 @@ export function ConsultationDetailScreen() {
         </div>
         <div className="flex justify-between">
           <span>Record ID</span>
-          <span className="font-mono truncate max-w-[200px]">{consultation.id}</span>
+          <span className="font-sans truncate max-w-[200px]">{consultation.id}</span>
         </div>
       </div>
     </div>

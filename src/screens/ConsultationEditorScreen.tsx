@@ -1,11 +1,12 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, lazy, Suspense } from 'react';
 import { useNavigate, useSearchParams, useParams } from 'react-router-dom';
 import { createConsultation, updateConsultation, getConsultation, markAwaitingReview } from '@/db/consultations';
 import { getPatient } from '@/db/patients';
 import type { Consultation, Patient } from '@/types';
 import { formatDateTime } from '@/utils';
 import { ClinicalBadge, SyncBadge } from '@/components/StatusBadges';
-import { ThreeAnatomyViewer, BodyRegion } from '@/components/three/ThreeAnatomyViewer';
+import type { BodyRegion } from '@/components/three/ThreeAnatomyViewer';
+const ThreeAnatomyViewer = lazy(() => import('@/components/three/ThreeAnatomyViewer').then(module => ({ default: module.ThreeAnatomyViewer })));
 import { AudioWaveform } from '@/components/AudioWaveform';
 import { PaperRecordScanner } from '@/components/PaperRecordScanner';
 import { StructuredClinicalAiReview } from '@/components/StructuredClinicalAiReview';
@@ -39,7 +40,7 @@ export function ConsultationEditorScreen() {
 
   // 3D Anatomy & Dictation state
   const [selectedRegion, setSelectedRegion] = useState<BodyRegion | null>(null);
-  const [showAnatomy, setShowAnatomy]       = useState(true);
+  const [showAnatomy, setShowAnatomy]       = useState(false);
   const [isRecording, setIsRecording]       = useState(false);
   const [recordSecs, setRecordSecs]         = useState(0);
   const timerRef                            = useRef<number | null>(null);
@@ -124,7 +125,7 @@ export function ConsultationEditorScreen() {
         addToast({
           type: 'success',
           title: 'Consultation Created',
-          message: 'Saved to IndexedDB with UUIDv7 and SHA-256 hash.',
+          message: 'Saved on this device and added to the upload queue.',
         });
         if (navigate_after) {
           navigate(`/consultations/${c.id}`, { replace: true });
@@ -272,22 +273,22 @@ export function ConsultationEditorScreen() {
         </button>
         <div className="flex-1">
           <h2 className="section-title text-xl">
-            {isEdit ? 'Edit Consultation' : 'New Clinical Consultation'}
+            {isEdit ? 'Edit Consultation' : 'New consultation'}
           </h2>
           {patient && (
-            <p className="text-slate-400 text-sm">
-              Patient: <span className="text-white font-medium">{patient.firstName} {patient.lastName}</span>
+            <p className="text-slate-600 text-sm">
+              Patient: <span className="text-ink font-medium">{patient.firstName} {patient.lastName}</span>
             </p>
           )}
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           <button
             type="button"
             onClick={() => setShowAnatomy(!showAnatomy)}
-            className={`btn-sm ${showAnatomy ? 'btn-secondary text-cyan-400 border-cyan-800' : 'btn-ghost text-slate-400'}`}
+            className={`btn-sm ${showAnatomy ? 'btn-secondary text-cyan-700 border-cyan-200' : 'btn-ghost text-slate-600'}`}
           >
-            3D Anatomy Scanner
+            Anatomy tool
           </button>
           {consultation && (
             <>
@@ -305,14 +306,14 @@ export function ConsultationEditorScreen() {
             <><span className="w-1.5 h-1.5 rounded-full bg-violet-400 animate-pulse-dot" />Saving…</>
           )}
           {!isSaving && lastSaved && !isDirty && (
-            <><CheckIcon className="w-3.5 h-3.5 text-green-400" /><span>Saved on this device — {formatDateTime(lastSaved)}</span></>
+            <><CheckIcon className="w-3.5 h-3.5 text-green-700" /><span>Saved on this device — {formatDateTime(lastSaved)}</span></>
           )}
           {!isSaving && isDirty && chiefComplaint.trim() && (
             <><span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse-dot" />Unsaved changes</>
           )}
         </div>
         {selectedRegion && (
-          <span className="text-cyan-400 font-mono text-[11px]">
+          <span className="text-cyan-700 font-sans text-xs">
             Active Region: {selectedRegion.name}
           </span>
         )}
@@ -326,7 +327,7 @@ export function ConsultationEditorScreen() {
             {/* Chief complaint */}
             <div className="field">
               <label className="label" htmlFor="chiefComplaint">
-                Chief complaint<span className="text-red-400 ml-0.5">*</span>
+                Chief complaint<span className="text-red-700 ml-0.5">*</span>
               </label>
               <input
                 id="chiefComplaint"
@@ -344,25 +345,25 @@ export function ConsultationEditorScreen() {
             <div className="field">
               <div className="flex items-center justify-between mb-1.5 flex-wrap gap-2">
                 <label className="label mb-0" htmlFor="notes">Clinical Documentation</label>
-                <div className="flex items-center gap-1.5 flex-wrap text-[11px] font-mono">
-                  <span className="text-slate-400">Templates:</span>
+                <div className="flex items-center gap-1.5 flex-wrap text-xs font-sans">
+                  <span className="text-slate-600">Templates:</span>
                   <button
                     type="button"
                     onClick={() => {
                       const soap = `\n[SOAP CLINICAL RECORD]\nS (Subjective): \nO (Objective): Vitals: BP --/--, HR -- bpm, SpO2 --%, Temp --°C\nA (Assessment): \nP (Plan): \n`;
                       setNotes(prev => (prev ? `${prev}\n${soap}` : soap));
                     }}
-                    className="px-2 py-0.5 rounded bg-surface border border-surface-border hover:border-cyan-500/50 text-cyan-400 hover:text-white transition"
+                    className="px-2 py-0.5 rounded bg-surface border border-surface-border hover:border-cyan-500/50 text-cyan-700 hover:text-ink transition"
                   >
                     + SOAP
                   </button>
                   <button
                     type="button"
                     onClick={() => {
-                      const vitals = `\n[VITALS]: BP: 120/80 mmHg | HR: 74 bpm | SpO2: 98% | Temp: 36.8°C | RR: 16/min\n`;
+                      const vitals = `\n[VITALS]: BP: --/-- mmHg | HR: -- bpm | SpO2: --% | Temp: --°C | RR: --/min\n`;
                       setNotes(prev => (prev ? `${prev}\n${vitals}` : vitals));
                     }}
-                    className="px-2 py-0.5 rounded bg-surface border border-surface-border hover:border-cyan-500/50 text-cyan-400 hover:text-white transition"
+                    className="px-2 py-0.5 rounded bg-surface border border-surface-border hover:border-cyan-500/50 text-cyan-700 hover:text-ink transition"
                   >
                     + Vitals
                   </button>
@@ -372,7 +373,7 @@ export function ConsultationEditorScreen() {
                       const rx = `\n[RX / DISCHARGE PLAN]:\n1. \n2. Follow-up: 7 days or sooner if red-flag symptoms develop.\n`;
                       setNotes(prev => (prev ? `${prev}\n${rx}` : rx));
                     }}
-                    className="px-2 py-0.5 rounded bg-surface border border-surface-border hover:border-cyan-500/50 text-cyan-400 hover:text-white transition"
+                    className="px-2 py-0.5 rounded bg-surface border border-surface-border hover:border-cyan-500/50 text-cyan-700 hover:text-ink transition"
                   >
                     + Rx Plan
                   </button>
@@ -380,7 +381,7 @@ export function ConsultationEditorScreen() {
                     <button
                       type="button"
                       onClick={() => handleSelectRegion(selectedRegion)}
-                      className="px-2 py-0.5 rounded bg-cyan-950 border border-cyan-500 text-cyan-300 font-bold"
+                      className="px-2 py-0.5 rounded bg-cyan-50 border border-cyan-500 text-cyan-700 font-bold"
                     >
                       + Tag {selectedRegion.name}
                     </button>
@@ -390,7 +391,7 @@ export function ConsultationEditorScreen() {
 
               <textarea
                 id="notes"
-                className="textarea min-h-[220px] text-sm leading-relaxed font-sans"
+                className="textarea min-h-[320px] text-sm leading-relaxed font-sans"
                 placeholder={`Write clinical notes here…\n\nInclude:\n• Subjective symptoms & history\n• Vital signs & physical examination\n• Assessment & planned therapeutics`}
                 value={notes}
                 onChange={e => setNotes(e.target.value)}
@@ -404,7 +405,7 @@ export function ConsultationEditorScreen() {
                   <button
                     type="button"
                     onClick={toggleRecording}
-                    className={`btn-sm ${isRecording ? 'btn-danger animate-pulse' : 'btn-secondary text-cyan-400'}`}
+                    className={`btn-sm ${isRecording ? 'btn-danger animate-pulse' : 'btn-secondary text-cyan-700'}`}
                   >
                     <MicIcon className="w-4 h-4" />
                     {isRecording ? `Recording (${recordSecs}s) • Stop` : 'Dictate Note'}
@@ -412,7 +413,7 @@ export function ConsultationEditorScreen() {
                   <button
                     type="button"
                     onClick={() => setIsOcrOpen(true)}
-                    className="btn-secondary btn-sm text-cyan-300 hover:text-white flex items-center gap-1.5"
+                    className="btn-secondary btn-sm text-cyan-700 hover:text-ink flex items-center gap-1.5"
                     title="Scan physical prescription or paper records via Tesseract OCR"
                   >
                     <ImageIcon className="w-4 h-4" />
@@ -424,7 +425,7 @@ export function ConsultationEditorScreen() {
                     disabled={!notes.trim() && !chiefComplaint.trim()}
                     className={`btn-sm text-xs font-semibold flex items-center gap-1.5 transition ${
                       notes.trim() || chiefComplaint.trim()
-                        ? 'btn-secondary text-amber-300 hover:text-white border-amber-500/40 bg-amber-950/20'
+                        ? 'btn-secondary text-amber-700 hover:text-ink border-amber-500/40 bg-amber-50/20'
                         : 'btn-ghost opacity-40 cursor-not-allowed text-slate-500'
                     }`}
                     title="Extract structured clinical JSON with confidence scores (clinician review required)"
@@ -435,7 +436,7 @@ export function ConsultationEditorScreen() {
                 <AudioWaveform isRecording={isRecording} />
               </div>
               {isRecording && (
-                <p className="text-xs text-cyan-300 font-mono animate-pulse">
+                <p className="text-xs text-cyan-700 font-sans animate-pulse">
                   Listening to voice dictation… Click "Stop" to transcribe into notes.
                 </p>
               )}
@@ -482,12 +483,12 @@ export function ConsultationEditorScreen() {
         {/* Right Column: 3D Anatomical Pinpointer */}
         {showAnatomy && (
           <div className="lg:col-span-5 space-y-4">
-            <ThreeAnatomyViewer
+            <Suspense fallback={<div className="skeleton h-96" aria-label="Loading anatomy view"/>}><ThreeAnatomyViewer
               selectedRegionId={selectedRegion?.id ?? null}
               onSelectRegion={handleSelectRegion}
-            />
-            <div className="card-sm bg-surface border border-surface-border text-xs text-slate-400 space-y-2">
-              <div className="flex items-center gap-2 text-cyan-400 font-mono font-medium">
+            /></Suspense>
+            <div className="card-sm bg-surface border border-surface-border text-xs text-slate-600 space-y-2">
+              <div className="flex items-center gap-2 text-cyan-700 font-sans font-medium">
                 <CheckIcon className="w-4 h-4" /> Three.js Spatial Mapping
               </div>
               <p className="leading-relaxed">
@@ -527,3 +528,5 @@ export function ConsultationEditorScreen() {
     </div>
   );
 }
+
+

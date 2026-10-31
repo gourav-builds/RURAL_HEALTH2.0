@@ -1,256 +1,54 @@
-import { useNavigate, Link } from 'react-router-dom';
+import { CareSculpture } from '@/components/CareSculpture';
+import { PremiumMetric, EmptyIllustration } from '@/components/PremiumMotion';
+import { ActivityChart, weekValues } from '@/components/ClinicalVisuals';
+import { UserPlus, Stethoscope, Search, ClipboardCheck } from 'lucide-react';
+import { useVisualConnection } from '@/components/VisualConnection';
+import { Link } from 'react-router-dom';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '@/db';
 import { useDevice } from '@/context/DeviceContext';
 import { useSync } from '@/context/SyncContext';
-import { formatDateTime, calcAge } from '@/utils';
-import { SyncBadge } from '@/components/StatusBadges';
-import {
-  UsersIcon, ClipboardIcon, PlusIcon, RefreshIcon,
-  AlertIcon, ClockIcon, ChevronRightIcon,
-} from '@/components/Icons';
-
-
-import { ThreeHeroCanvas } from '@/components/three/ThreeHeroCanvas';
-import { useToast } from '@/context/ToastContext';
+import { calcAge, formatDate } from '@/utils';
+import { SyncBadge, ClinicalBadge } from '@/components/StatusBadges';
+import { UsersIcon, ClipboardIcon, PlusIcon, ClockIcon, RefreshIcon, ChevronRightIcon, HeartIcon, CheckIcon } from '@/components/Icons';
 
 export function DashboardScreen() {
+  const { preview } = useVisualConnection();
   const { device } = useDevice();
-  const { pendingCount, conflictCount, isSyncing, isOnline, lastSyncAt, triggerSync } = useSync();
-  const { addToast } = useToast();
-  const navigate = useNavigate();
-
-  const handleSyncWithToast = async () => {
-    addToast({
-      type: 'info',
-      title: 'Synchronizing Queue',
-      message: 'Checking for offline changes and verifying remote version vectors…',
-      duration: 3000,
-    });
-    await triggerSync();
-  };
-
-
-  const recentPatients = useLiveQuery(async () => {
-    if (!device) return [];
-    return db.patients
-      .where('orgId').equals(device.orgId)
-      .filter(p => !p.deletedAt)
-      .reverse()
-      .sortBy('updatedAt')
-      .then(rows => rows.slice(0, 6));
-  }, [device?.orgId]);
-
-  const pendingReviews = useLiveQuery(async () => {
-    if (!device) return [];
-    return db.consultations
-      .where('orgId').equals(device.orgId)
-      .filter(c => c.clinicalStatus === 'awaiting_review' && !c.deletedAt)
-      .reverse()
-      .sortBy('updatedAt')
-      .then(rows => rows.slice(0, 5));
-  }, [device?.orgId]);
-
-  const totalPatients = useLiveQuery(async () => {
-    if (!device) return 0;
-    return db.patients.where('orgId').equals(device.orgId).filter(p => !p.deletedAt).count();
-  }, [device?.orgId], 0);
-
-  const totalConsultations = useLiveQuery(async () => {
-    if (!device) return 0;
-    return db.consultations.where('orgId').equals(device.orgId).filter(c => !c.deletedAt).count();
-  }, [device?.orgId], 0);
-
+  const { pendingCount, conflictCount, isOnline } = useSync();
+  const patients = useLiveQuery(() => device ? db.patients.where('orgId').equals(device.orgId).filter(p => !p.deletedAt).toArray() : [], [device?.orgId]);
+  const consultations = useLiveQuery(() => device ? db.consultations.where('orgId').equals(device.orgId).filter(c => !c.deletedAt).toArray() : [], [device?.orgId]);
+  const recent = [...(patients || [])].sort((a, b) => b.updatedAt.localeCompare(a.updatedAt)).slice(0, 5);
+  const reviews = (consultations || []).filter(c => c.clinicalStatus === 'awaiting_review');
+  const activity = [...(consultations || [])].sort((a, b) => b.updatedAt.localeCompare(a.updatedAt)).slice(0, 3);
   const hour = new Date().getHours();
   const greeting = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening';
-
-  return (
-    <div className="space-y-6 animate-fade-in">
-      {/* 3D Telemetry Hero Banner */}
-      <div className="card relative overflow-hidden bg-gradient-to-r from-surface-card via-slate-900 to-slate-950 border border-slate-700/60 p-6 shadow-2xl">
-        <div className="grid lg:grid-cols-12 gap-6 items-center">
-          <div className="lg:col-span-7 space-y-4 z-10">
-            <div className="flex items-center gap-2">
-              <span className="px-2.5 py-0.5 rounded-full text-xs font-mono font-medium bg-brand-950 border border-brand-500/40 text-brand-300">
-                CLINICAL NODE {device?.deviceId ? `• ${device.deviceId.slice(0, 8)}` : ''}
-              </span>
-              <span className="text-xs text-slate-400 font-mono">
-                {device?.orgId ? `Org: ${device.orgId.slice(0, 8)}` : 'Rural Health Station'}
-              </span>
-
-            </div>
-
-            <div>
-              <h2 className="text-3xl font-extrabold text-white tracking-tight">
-                {greeting}{device ? `, ${device.displayName.split(' ')[0]}` : ''}
-              </h2>
-              <p className="text-slate-300 text-sm mt-1 max-w-xl leading-relaxed">
-                Autonomous offline station active. All patient records and consultation vectors are cached in IndexedDB with cryptographic audit hashing.
-              </p>
-            </div>
-
-            <div className="flex flex-wrap items-center gap-3 pt-1">
-              <button onClick={() => navigate('/patients/new')} className="btn-primary shadow-lg shadow-sky-900/30">
-                <PlusIcon className="w-4 h-4" /> New Patient
-              </button>
-              <button onClick={() => navigate('/consultations/new')} className="btn-secondary">
-                <ClipboardIcon className="w-4 h-4 text-cyan-400" /> Start Consultation
-              </button>
-              <button onClick={handleSyncWithToast} disabled={!isOnline || isSyncing} className="btn-ghost text-xs">
-                <RefreshIcon className={`w-3.5 h-3.5 text-slate-400 ${isSyncing ? 'animate-spin-slow' : ''}`} />
-                {isSyncing ? 'Syncing...' : 'Sync Telemetry'}
-              </button>
-            </div>
-          </div>
-
-          <div className="lg:col-span-5 h-56 lg:h-64 relative rounded-xl overflow-hidden border border-slate-800/80 bg-slate-950/60 shadow-inner">
-            <ThreeHeroCanvas isOnline={isOnline} isSyncing={isSyncing} pendingCount={pendingCount} />
-          </div>
-        </div>
-      </div>
-
-
-      {/* Stats row */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        {[
-          { label: 'Total patients',      value: totalPatients,        icon: UsersIcon,     color: 'text-brand-400',  bg: 'bg-brand-900/30' },
-          { label: 'Consultations',       value: totalConsultations,   icon: ClipboardIcon, color: 'text-sky-400',    bg: 'bg-sky-900/30' },
-          { label: 'Pending review',      value: pendingReviews?.length ?? 0, icon: ClockIcon, color: 'text-amber-400', bg: 'bg-amber-900/30' },
-          { label: 'Pending sync',        value: pendingCount,         icon: RefreshIcon,   color: 'text-violet-400', bg: 'bg-violet-900/30' },
-        ].map(({ label, value, icon: Icon, color, bg }) => (
-          <div key={label} className="card-sm flex items-center gap-4">
-            <div className={`${bg} rounded-xl p-3 flex-shrink-0`}>
-              <Icon className={`w-5 h-5 ${color}`} />
-            </div>
-            <div>
-              <p className="text-2xl font-bold text-white">{value ?? '–'}</p>
-              <p className="text-xs text-slate-400">{label}</p>
-            </div>
-          </div>
-        ))}
-      </div>
-
-      <div className="grid lg:grid-cols-3 gap-6">
-        {/* Recent patients */}
-        <div className="lg:col-span-2 space-y-3">
-          <div className="flex items-center justify-between">
-            <h3 className="section-title">Recent Patients</h3>
-            <Link to="/patients" className="text-xs text-brand-400 hover:text-brand-300 flex items-center gap-1">
-              View all <ChevronRightIcon className="w-3.5 h-3.5" />
-            </Link>
-          </div>
-
-          {!recentPatients || recentPatients.length === 0 ? (
-            <div className="card">
-              <div className="empty-state py-10">
-                <div className="empty-icon"><UsersIcon className="w-6 h-6" /></div>
-                <p className="text-slate-400 text-sm font-medium">No patients yet</p>
-                <button onClick={() => navigate('/patients/new')} className="btn-primary btn-sm mt-1">
-                  <PlusIcon className="w-3.5 h-3.5" /> Register first patient
-                </button>
-              </div>
-            </div>
-          ) : (
-            <div className="space-y-2">
-              {recentPatients.map(patient => (
-                <Link
-                  key={patient.id}
-                  to={`/patients/${patient.id}`}
-                  className="card-sm flex items-center gap-4 hover:bg-surface-hover transition-colors cursor-pointer group"
-                >
-                  {/* Avatar */}
-                  <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-brand-700 to-sky-700 flex items-center justify-center text-white font-bold text-sm flex-shrink-0">
-                    {patient.firstName[0]}{patient.lastName[0]}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="font-medium text-white text-sm">
-                      {patient.firstName} {patient.lastName}
-                    </p>
-                    <p className="text-xs text-slate-500">
-                      {calcAge(patient.dateOfBirth)} yrs · {patient.sex} · {formatDateTime(patient.updatedAt)}
-                    </p>
-                  </div>
-                  <SyncBadge status={patient.syncStatus} />
-                  <ChevronRightIcon className="w-4 h-4 text-slate-600 group-hover:text-slate-400 flex-shrink-0" />
-                </Link>
-              ))}
-            </div>
-          )}
-        </div>
-
-        {/* Right column */}
-        <div className="space-y-4">
-          {/* Sync status card */}
-          <div className="card space-y-3">
-            <h3 className="section-title">Sync Status</h3>
-            <div className="space-y-2 text-sm">
-              <div className="flex justify-between">
-                <span className="text-slate-400">Connection</span>
-                <span className={isOnline ? 'text-green-400 font-medium' : 'text-amber-400 font-medium'}>
-                  {isOnline ? 'Online' : 'Offline'}
-                </span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-slate-400">Pending ops</span>
-                <span className={pendingCount > 0 ? 'text-violet-400 font-medium' : 'text-slate-300'}>{pendingCount}</span>
-              </div>
-              {conflictCount > 0 && (
-                <div className="flex justify-between">
-                  <span className="text-slate-400">Conflicts</span>
-                  <Link to="/sync" className="text-red-400 font-medium hover:text-red-300">{conflictCount} — resolve</Link>
-                </div>
-              )}
-              {lastSyncAt && (
-                <div className="flex justify-between">
-                  <span className="text-slate-400">Last synced</span>
-                  <span className="text-slate-300">{formatDateTime(lastSyncAt)}</span>
-                </div>
-              )}
-            </div>
-            {isOnline && (
-              <button onClick={triggerSync} disabled={isSyncing} className="btn-secondary btn-sm w-full">
-                <RefreshIcon className={`w-3.5 h-3.5 ${isSyncing ? 'animate-spin-slow' : ''}`} />
-                {isSyncing ? 'Syncing…' : 'Sync now'}
-              </button>
-            )}
-          </div>
-
-          {/* Pending reviews */}
-          {(pendingReviews?.length ?? 0) > 0 && (
-            <div className="card space-y-3">
-              <div className="flex items-center gap-2">
-                <ClockIcon className="w-4 h-4 text-amber-400" />
-                <h3 className="section-title text-base">Awaiting Review</h3>
-              </div>
-              <div className="space-y-2">
-                {pendingReviews!.map(c => (
-                  <Link
-                    key={c.id}
-                    to={`/consultations/${c.id}`}
-                    className="block p-3 rounded-xl bg-surface hover:bg-surface-hover transition-colors border border-surface-border"
-                  >
-                    <p className="text-sm text-white font-medium truncate">{c.chiefComplaint}</p>
-                    <p className="text-xs text-slate-500 mt-0.5">{formatDateTime(c.updatedAt)}</p>
-                  </Link>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* Conflicts alert */}
-          {conflictCount > 0 && (
-            <Link to="/sync" className="block">
-              <div className="alert-error cursor-pointer hover:bg-red-900/50 transition-colors">
-                <AlertIcon className="w-4 h-4 flex-shrink-0" />
-                <div>
-                  <p className="font-semibold text-red-300">{conflictCount} sync conflict{conflictCount !== 1 ? 's' : ''}</p>
-                  <p className="text-xs text-red-400 mt-0.5">Clinician review required. Tap to resolve.</p>
-                </div>
-              </div>
-            </Link>
-          )}
-        </div>
-      </div>
-    </div>
-  );
+  const stats = [
+    { label: 'Registered patients', value: patients?.length, caption: 'Your community, in one place', icon: UsersIcon, tone: 'mint', to: '/patients' },
+    { label: 'Consultations', value: consultations?.length, caption: 'Every conversation counts', icon: ClipboardIcon, tone: 'blue', to: '/consultations' },
+    { label: 'Awaiting review', value: consultations ? reviews.length : undefined, caption: 'Ready for your attention', icon: ClockIcon, tone: 'peach', to: '/consultations?status=awaiting_review' },
+    { label: 'Pending uploads', value: pendingCount, caption: 'Changes stored on this device', icon: RefreshIcon, tone: 'lavender', to: '/sync' },
+  ];
+  return <div className="dashboard animate-fade-in">
+    <div className="page-heading"><div><p className="eyebrow">YOUR CLINIC AT A GLANCE</p><h1>{greeting}{device?.displayName ? `, ${device.displayName.replace(/^Dr\.?\s+/i, '').split(' ')[0]}` : ''}<span className="greeting-dot">.</span></h1><p>Here’s what’s happening in your care community.</p></div><div className="date-label"><ClockIcon className="w-4 h-4" />{new Date().toLocaleDateString('en-IN', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' })}</div></div>
+    <section className="care-banner" aria-label="Start patient care">
+      <div className="care-banner-content"><span className="hero-kicker"><span /> READY FOR THE NEXT PATIENT</span><h2>Closer to your patients.<br /><span>Wherever care happens.</span></h2><p>Less time on paperwork. More time on the people who matter.<br className="hidden lg:block" /> Your clinic, connected by care — even when you’re offline.</p><div className="hero-actions"><Link to="/consultations/new" className="hero-primary"><PlusIcon className="w-4 h-4" />Start consultation</Link><Link to="/patients/new" className="hero-secondary">Register patient <ChevronRightIcon className="w-4 h-4" /></Link></div></div>
+      <CareSculpture />
+    </section>
+    <section className="metric-grid" aria-label="Clinic summary">{stats.map((stat, index) => <PremiumMetric key={stat.label} {...stat} index={index} trend={weekValues(index===0?(patients||[]).map(p=>p.updatedAt):index===2?reviews.map(c=>c.updatedAt):(consultations||[]).filter(c=>index!==3||c.syncStatus==='local').map(c=>c.updatedAt))} />)}</section>
+    <div className="quick-actions-row">{[{to:"/patients/new",label:"Register patient",caption:"Welcome someone new",icon:UserPlus},{to:"/consultations/new",label:"Start consultation",caption:"Make the next visit count",icon:Stethoscope},{to:"/patients",label:"Find a patient",caption:"Their complete care story",icon:Search},{to:"/consultations?status=awaiting_review",label:"Review notes",caption:"Close the loop on care",icon:ClipboardCheck}].map(({to,label,caption,icon:Icon})=><Link to={to} key={to}><span><Icon size={19}/></span><div><strong>{label}</strong><small>{caption}</small></div><ChevronRightIcon className="w-4 h-4"/></Link>)}</div><ActivityChart consultations={consultations||[]} />
+    <div className="dashboard-columns"><div className="dashboard-main">
+      <section className="panel"><div className="panel-heading"><div><h2>Recent patients</h2><p>A familiar face. A complete picture.</p></div><Link to="/patients" className="text-link">View all <ChevronRightIcon className="w-4 h-4" /></Link></div>
+        <div className="patient-table"><div className="patient-table-labels"><span>PATIENT</span><span>LAST UPDATED</span><span>RECORD STATUS</span><span /></div>{patients === undefined ? <div className="p-6 space-y-4" aria-label="Loading patients">{[1, 2, 3].map(n => <div key={n} className="skeleton h-12" />)}</div> : recent.length ? recent.map((p, i) => <Link className="patient-table-row" key={p.id} to={`/patients/${p.id}`}><div className="patient-identity"><span className={`patient-avatar avatar-${i % 4}`}>{p.firstName[0]}{p.lastName[0]}</span><div><strong>{p.firstName} {p.lastName}</strong><small>{calcAge(p.dateOfBirth)} years <span>·</span> {p.sex.replaceAll('_', ' ')}</small></div></div><span className="patient-updated">{formatDate(p.updatedAt)}</span><SyncBadge status={p.syncStatus} /><ChevronRightIcon className="w-4 h-4 text-slate-400" /></Link>) : <div className="designed-empty"><EmptyIllustration /><h3>Your community starts here</h3><p>Register your first patient to bring their care history together.</p><Link className="btn-primary btn-sm" to="/patients/new"><PlusIcon className="w-4 h-4" />Register a patient</Link></div>}</div>
+        <div className="panel-footer"><span>{patients?.length ?? 0} patients in your clinic</span><span>Records available on this device</span></div>
+      </section>
+      <section className="panel"><div className="panel-heading"><div><h2>Recent consultations</h2><p>Pick up where care left off.</p></div><Link to="/consultations" className="text-link">View all <ChevronRightIcon className="w-4 h-4" /></Link></div>{activity.length ? <div className="activity-list">{activity.map(c => { const p = patients?.find(patient => patient.id === c.patientId); return <Link to={`/consultations/${c.id}`} key={c.id} className="activity-row"><span className="avatar-ring compact-avatar">{p ? `${p.firstName[0]}${p.lastName[0]}` : "RC"}</span><div className="flex-1 min-w-0"><strong>{c.chiefComplaint}</strong><small>{p ? `${p.firstName} ${p.lastName}` : 'Patient record'} · {formatDate(c.updatedAt)}</small></div><ClinicalBadge status={c.clinicalStatus} /></Link>; })}</div> : <div className="quiet-empty"><ClipboardIcon className="w-6 h-6" /><div><strong>A fresh start for better care</strong><p>Your consultations will appear here as you document visits.</p></div><Link to="/consultations/new" aria-label="Start your first consultation"><ChevronRightIcon className="w-5 h-5" /></Link></div>}</section>
+    </div><div className="dashboard-aside">
+      <section className="review-panel"><div className="review-heading"><span className="metric-icon peach"><ClockIcon className="w-5 h-5" /></span><span className="eyebrow">CARE FOLLOW-THROUGH</span></div><h2>{reviews.length ? `${reviews.length} consultation${reviews.length === 1 ? '' : 's'} to review` : 'A little attention. A lasting difference.'}</h2><p>{reviews.length ? 'Complete your clinical reviews and keep each patient’s record moving forward.' : 'Review clinical notes in one place, with every detail ready for your attention.'}</p><Link to="/consultations?status=awaiting_review" className="review-link">{reviews.length ? 'Review consultations' : 'Open review workspace'}<ChevronRightIcon className="w-4 h-4" /></Link></section>
+      <section className="panel connection-panel"><div className="panel-heading"><h2>Your workspace</h2><span className="live-dot" /></div><div className="workspace-status"><span>Internet connection</span><strong>{(preview ?? isOnline) ? 'Connected' : 'Offline'}{preview!==null?' · preview':''}</strong></div><div className="workspace-status"><span>Changes awaiting upload</span><strong>{pendingCount}</strong></div><div className="workspace-status"><span>Conflicts to review</span><strong>{conflictCount}</strong></div><div className="local-note"><CheckIcon className="w-4 h-4" /><p>Work locally, with confidence.<span>Server synchronization is not yet connected.</span></p></div><Link to="/sync" className="text-link">Manage sync queue <ChevronRightIcon className="w-4 h-4" /></Link></section>
+      <div className="care-quote"><HeartIcon className="w-5 h-5" /><p>Great care begins with<br />a little more connection.</p><span>THE RURALCARE PROMISE</span></div>
+    </div></div>
+  </div>;
 }
+
+

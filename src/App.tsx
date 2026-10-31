@@ -9,9 +9,12 @@ import { ToastContainer } from '@/components/ToastContainer';
 import { LockScreen } from '@/components/LockScreen';
 import { AppLayout } from '@/components/AppLayout';
 
+import { ConsultationsScreen } from '@/screens/ConsultationsScreen';
+
 // Screens
 import { SetupScreen }                  from '@/screens/SetupScreen';
 import { LoginScreen }                  from '@/screens/LoginScreen';
+import { ForgotPasswordScreen }          from '@/screens/ForgotPasswordScreen';
 import { DashboardScreen }              from '@/screens/DashboardScreen';
 import { PatientsScreen }               from '@/screens/PatientsScreen';
 import { PatientRegistrationScreen }    from '@/screens/PatientRegistrationScreen';
@@ -37,8 +40,8 @@ function AppLoader() {
   return (
     <div className="min-h-screen bg-surface flex items-center justify-center">
       <div className="flex flex-col items-center gap-4">
-        <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-cyan-500 via-sky-600 to-indigo-600 animate-pulse shadow-xl shadow-cyan-950" />
-        <p className="text-slate-400 text-sm font-mono tracking-wide">Loading RuralCare Workstation…</p>
+        <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-cyan-100 via-sky-100 to-indigo-100 animate-pulse shadow-xl shadow-cyan-950" />
+        <p className="text-slate-600 text-sm font-sans tracking-wide">Loading RuralCare Workstation…</p>
       </div>
     </div>
   );
@@ -53,6 +56,9 @@ function AppRoutes() {
       {/* Clinical Station PIN Login */}
       <Route path="/login" element={<LoginScreen />} />
 
+      {/* Forgot PIN / Password Recovery */}
+      <Route path="/forgot-password" element={<ForgotPasswordScreen />} />
+
       {/* Protected routes inside AppLayout */}
       <Route element={
         <RequireAuth>
@@ -65,7 +71,7 @@ function AppRoutes() {
         <Route path="/patients/new"           element={<PatientRegistrationScreen />} />
         <Route path="/patients/:id"           element={<PatientProfileScreen />} />
         <Route path="/patients/:id/edit"      element={<PatientRegistrationScreen />} />
-        <Route path="/consultations"          element={<Navigate to="/patients" replace />} />
+        <Route path="/consultations"          element={<ConsultationsScreen />} />
         <Route path="/consultations/new"      element={<ConsultationEditorScreen />} />
         <Route path="/consultations/:id"      element={<ConsultationDetailScreen />} />
         <Route path="/consultations/:id/edit" element={<ConsultationEditorScreen />} />

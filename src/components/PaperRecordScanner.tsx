@@ -196,38 +196,38 @@ export function PaperRecordScanner({ isOpen, onClose, onExtracted, onLaunchAiExt
         {/* Header */}
         <div className="flex items-start justify-between gap-4 border-b border-surface-border pb-3 flex-shrink-0">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-cyan-600 to-indigo-700 flex items-center justify-center text-white shadow-md shadow-cyan-950">
+            <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-cyan-100 to-indigo-100 flex items-center justify-center text-ink shadow-md shadow-cyan-950">
               <ImageIcon className="w-5 h-5" />
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <h3 id="ocr-scanner-title" className="text-lg font-bold text-white tracking-tight">
+                <h3 id="ocr-scanner-title" className="text-lg font-bold text-ink tracking-tight">
                   Paper Medical Record Scanner (Tesseract OCR)
                 </h3>
-                <span className="px-2 py-0.5 rounded text-[10px] font-mono bg-cyan-950 border border-cyan-800 text-cyan-300">
+                <span className="px-2 py-0.5 rounded text-xs font-sans bg-cyan-50 border border-cyan-200 text-cyan-700">
                   OFFLINE OCR
                 </span>
               </div>
-              <p className="text-xs text-slate-400 mt-0.5">
+              <p className="text-xs text-slate-600 mt-0.5">
                 Scan physical paper charts, lab slips, and prescriptions. OCR output is never auto-saved.
               </p>
             </div>
           </div>
 
           <button onClick={onClose} className="btn-icon btn-ghost btn-sm" aria-label="Close">
-            <XIcon className="w-5 h-5 text-slate-400" />
+            <XIcon className="w-5 h-5 text-slate-600" />
           </button>
         </div>
 
         {/* Camera or Image Picker Toolbar */}
         {!imageSrc && !cameraActive && (
           <div className="p-8 border-2 border-dashed border-surface-borderLight rounded-2xl bg-surface/40 text-center space-y-5 my-auto">
-            <div className="w-14 h-14 rounded-2xl bg-cyan-950/80 border border-cyan-500/40 text-cyan-400 flex items-center justify-center mx-auto shadow-lg shadow-cyan-950/50">
+            <div className="w-14 h-14 rounded-2xl bg-cyan-50/80 border border-cyan-500/40 text-cyan-700 flex items-center justify-center mx-auto shadow-lg shadow-slate-200/40">
               <FileTextIcon className="w-7 h-7" />
             </div>
             <div>
-              <h4 className="text-base font-bold text-white">Capture or Upload Paper Medical Record</h4>
-              <p className="text-xs text-slate-400 max-w-md mx-auto mt-1">
+              <h4 className="text-base font-bold text-ink">Capture or Upload Paper Medical Record</h4>
+              <p className="text-xs text-slate-600 max-w-md mx-auto mt-1">
                 Upload a photo or scan of a paper chart, handwritten vitals slip, or diagnostic printout.
               </p>
             </div>
@@ -260,7 +260,7 @@ export function PaperRecordScanner({ isOpen, onClose, onExtracted, onLaunchAiExt
 
             {/* Quick Rural Presets */}
             <div className="pt-4 border-t border-surface-border text-left">
-              <p className="text-[11px] font-mono text-slate-400 uppercase tracking-wider mb-2">
+              <p className="text-xs font-sans text-slate-600 uppercase tracking-wider mb-2">
                 Or test with sample rural clinical slips:
               </p>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
@@ -271,8 +271,8 @@ export function PaperRecordScanner({ isOpen, onClose, onExtracted, onLaunchAiExt
                     onClick={() => loadSample(s)}
                     className="p-3 rounded-xl bg-surface hover:bg-surface-hover border border-surface-border text-left transition group"
                   >
-                    <span className="text-xs font-bold text-cyan-300 group-hover:text-white block">{s.name}</span>
-                    <span className="text-[10px] text-slate-400 font-mono line-clamp-1 mt-0.5">{s.text.slice(0, 60)}…</span>
+                    <span className="text-xs font-bold text-cyan-700 group-hover:text-ink block">{s.name}</span>
+                    <span className="text-xs text-slate-600 font-sans line-clamp-1 mt-0.5">{s.text.slice(0, 60)}…</span>
                   </button>
                 ))}
               </div>
@@ -309,13 +309,13 @@ export function PaperRecordScanner({ isOpen, onClose, onExtracted, onLaunchAiExt
         {/* Progress Bar */}
         {isProcessing && (
           <div className="p-4 rounded-xl bg-surface border border-surface-border space-y-2">
-            <div className="flex justify-between text-xs font-mono">
-              <span className="text-cyan-400 font-semibold">{progressStatus}</span>
-              <span className="text-white">{progressPercent}%</span>
+            <div className="flex justify-between text-xs font-sans">
+              <span className="text-cyan-700 font-semibold">{progressStatus}</span>
+              <span className="text-ink">{progressPercent}%</span>
             </div>
-            <div className="w-full bg-slate-800 rounded-full h-2 overflow-hidden">
+            <div className="w-full bg-slate-100 rounded-full h-2 overflow-hidden">
               <div
-                className="h-full bg-gradient-to-r from-cyan-500 to-indigo-500 rounded-full transition-all duration-300"
+                className="h-full bg-gradient-to-r from-cyan-100 to-indigo-100 rounded-full transition-all duration-300"
                 style={{ width: `${progressPercent}%` }}
               />
             </div>
@@ -326,8 +326,8 @@ export function PaperRecordScanner({ isOpen, onClose, onExtracted, onLaunchAiExt
         {isReviewed && imageSrc && (
           <div className="space-y-3 flex-1 flex flex-col overflow-hidden">
             {/* Safety Mandate Banner */}
-            <div className="p-2.5 rounded-xl bg-amber-950/40 border border-amber-500/40 flex items-center gap-2.5 text-xs text-amber-300 flex-shrink-0">
-              <AlertIcon className="w-4 h-4 flex-shrink-0 text-amber-400" />
+            <div className="p-2.5 rounded-xl bg-amber-50/40 border border-amber-500/40 flex items-center gap-2.5 text-xs text-amber-700 flex-shrink-0">
+              <AlertIcon className="w-4 h-4 flex-shrink-0 text-amber-700" />
               <span>
                 <strong>Editable Review Screen:</strong> Verify and correct OCR readings below. Extracted data is <strong>never auto-saved</strong> to medical records until explicitly confirmed.
               </span>
@@ -337,7 +337,7 @@ export function PaperRecordScanner({ isOpen, onClose, onExtracted, onLaunchAiExt
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 flex-1 min-h-0 overflow-hidden">
               {/* Left: Original Record Image */}
               <div className="rounded-xl border border-surface-border bg-black/60 p-2 flex flex-col overflow-hidden">
-                <span className="text-[10px] font-mono text-slate-400 uppercase tracking-wider mb-1 block px-1">
+                <span className="text-xs font-sans text-slate-600 uppercase tracking-wider mb-1 block px-1">
                   Original Scanned Document
                 </span>
                 <div className="flex-1 flex items-center justify-center overflow-auto rounded-lg bg-black/40">
@@ -352,17 +352,17 @@ export function PaperRecordScanner({ isOpen, onClose, onExtracted, onLaunchAiExt
               {/* Right: Editable OCR Output */}
               <div className="rounded-xl border border-surface-border bg-surface p-3 flex flex-col space-y-2 overflow-hidden">
                 <div className="flex items-center justify-between">
-                  <span className="text-[10px] font-mono text-slate-400 uppercase tracking-wider">
+                  <span className="text-xs font-sans text-slate-600 uppercase tracking-wider">
                     Editable OCR Output (Review & Edit)
                   </span>
-                  <span className="text-[10px] font-mono text-slate-500">
+                  <span className="text-xs font-sans text-slate-500">
                     {recognizedText.length} characters
                   </span>
                 </div>
                 <textarea
                   value={recognizedText}
                   onChange={e => setRecognizedText(e.target.value)}
-                  className="textarea flex-1 min-h-[220px] font-mono text-xs leading-relaxed bg-surface-card"
+                  className="textarea flex-1 min-h-[220px] font-sans text-xs leading-relaxed bg-surface-card"
                   placeholder="Recognized OCR text will appear here. Edit and verify against the original image."
                 />
               </div>
@@ -387,7 +387,7 @@ export function PaperRecordScanner({ isOpen, onClose, onExtracted, onLaunchAiExt
                   type="button"
                   onClick={handleSendToAi}
                   disabled={!recognizedText.trim()}
-                  className="btn-secondary btn-sm text-cyan-300 hover:text-white border-cyan-500/40 text-xs font-semibold"
+                  className="btn-secondary btn-sm text-cyan-700 hover:text-ink border-cyan-500/40 text-xs font-semibold"
                 >
                   ⚡ Send to Clinical AI Extractor
                 </button>

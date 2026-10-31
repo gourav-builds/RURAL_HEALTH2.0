@@ -105,4 +105,22 @@ describe('Authentication & Cryptographic Security', () => {
       Object.defineProperty(crypto, 'subtle', { value: originalSubtle, configurable: true });
     }
   });
+
+  it('correctly hashes and verifies security recovery questions (case-insensitive & trimmed)', async () => {
+    const { hashSecurityAnswer, verifySecurityAnswer } = await import('@/utils');
+    const salt = generateSalt();
+    const answer = 'Raigad District Hospital';
+    const answerHash = await hashSecurityAnswer(answer, salt);
+
+    expect(answerHash).toMatch(/^[0-9a-f]{64}$/);
+
+    // Exact match
+    expect(await verifySecurityAnswer('Raigad District Hospital', salt, answerHash)).toBe(true);
+    // Case-insensitive match
+    expect(await verifySecurityAnswer('raigad district hospital', salt, answerHash)).toBe(true);
+    // Whitespace trimmed match
+    expect(await verifySecurityAnswer('  Raigad District Hospital  ', salt, answerHash)).toBe(true);
+    // Incorrect answer
+    expect(await verifySecurityAnswer('Pune General Hospital', salt, answerHash)).toBe(false);
+  });
 });

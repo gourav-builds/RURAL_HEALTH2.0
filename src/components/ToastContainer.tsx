@@ -9,11 +9,11 @@ export function ToastContainer() {
   const getIcon = (type: ToastType) => {
     switch (type) {
       case 'success':
-        return <CheckIcon className="w-5 h-5 text-emerald-400 flex-shrink-0" />;
+        return <CheckIcon className="w-5 h-5 text-emerald-700 flex-shrink-0" />;
       case 'warning':
-        return <AlertIcon className="w-5 h-5 text-amber-400 flex-shrink-0" />;
+        return <AlertIcon className="w-5 h-5 text-amber-700 flex-shrink-0" />;
       case 'error':
-        return <XIcon className="w-5 h-5 text-red-400 flex-shrink-0" />;
+        return <XIcon className="w-5 h-5 text-red-700 flex-shrink-0" />;
       default:
         return <div className="w-2.5 h-2.5 rounded-full bg-cyan-400 flex-shrink-0" />;
     }
@@ -21,10 +21,10 @@ export function ToastContainer() {
 
   const getBorder = (type: ToastType) => {
     switch (type) {
-      case 'success': return 'border-emerald-500/40 bg-slate-900/95';
-      case 'warning': return 'border-amber-500/40 bg-slate-900/95';
-      case 'error':   return 'border-red-500/40 bg-slate-900/95';
-      default:        return 'border-cyan-500/40 bg-slate-900/95';
+      case 'success': return 'border-emerald-500/40 bg-slate-50/95';
+      case 'warning': return 'border-amber-500/40 bg-slate-50/95';
+      case 'error':   return 'border-red-500/40 bg-slate-50/95';
+      default:        return 'border-cyan-500/40 bg-slate-50/95';
     }
   };
 
@@ -38,14 +38,14 @@ export function ToastContainer() {
         >
           {getIcon(toast.type)}
           <div className="flex-1 min-w-0">
-            <h4 className="text-sm font-semibold text-white tracking-tight">{toast.title}</h4>
+            <h4 className="text-sm font-semibold text-ink tracking-tight">{toast.title}</h4>
             {toast.message && (
-              <p className="text-xs text-slate-300 mt-0.5 leading-relaxed">{toast.message}</p>
+              <p className="text-xs text-slate-700 mt-0.5 leading-relaxed">{toast.message}</p>
             )}
           </div>
           <button
             onClick={() => removeToast(toast.id)}
-            className="text-slate-400 hover:text-white p-1 rounded transition"
+            className="text-slate-600 hover:text-ink p-1 rounded transition"
             aria-label="Dismiss toast"
           >
             <XIcon className="w-4 h-4" />

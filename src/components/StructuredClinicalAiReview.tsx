@@ -113,33 +113,33 @@ export function StructuredClinicalAiReview({ isOpen, data: initialData, onClose,
         {/* Header */}
         <div className="flex items-start justify-between gap-4 border-b border-surface-border pb-4 flex-shrink-0">
           <div className="flex items-center gap-3">
-            <div className="w-11 h-11 rounded-2xl bg-amber-950/80 border border-amber-500/50 flex items-center justify-center text-amber-400 flex-shrink-0 shadow-lg shadow-amber-950/40">
+            <div className="w-11 h-11 rounded-2xl bg-amber-50/80 border border-amber-500/50 flex items-center justify-center text-amber-700 flex-shrink-0 shadow-lg shadow-amber-950/40">
               <ShieldIcon className="w-6 h-6" />
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <h3 id="ai-review-title" className="text-lg font-bold text-white tracking-tight">
+                <h3 id="ai-review-title" className="text-lg font-bold text-ink tracking-tight">
                   Clinical AI Structured Extraction Review
                 </h3>
-                <span className="px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-amber-950 border border-amber-600/80 text-amber-300">
+                <span className="px-2 py-0.5 rounded-full text-xs font-sans font-bold bg-amber-50 border border-amber-600/80 text-amber-700">
                   UNVERIFIED AI OUTPUT
                 </span>
               </div>
-              <p className="text-xs text-slate-400 mt-0.5">
+              <p className="text-xs text-slate-600 mt-0.5">
                 Every field requires clinician verification before entering the legal medical record.
               </p>
             </div>
           </div>
 
           <div className="flex items-center gap-2">
-            <div className="px-3 py-1 rounded-xl bg-surface border border-surface-border flex items-center gap-2 text-xs font-mono">
-              <span className="text-slate-400">Confidence:</span>
-              <span className={`font-bold ${data.overallConfidence >= 85 ? 'text-emerald-400' : 'text-amber-400'}`}>
+            <div className="px-3 py-1 rounded-xl bg-surface border border-surface-border flex items-center gap-2 text-xs font-sans">
+              <span className="text-slate-600">Confidence:</span>
+              <span className={`font-bold ${data.overallConfidence >= 85 ? 'text-emerald-700' : 'text-amber-700'}`}>
                 {data.overallConfidence}%
               </span>
             </div>
             <button onClick={onClose} className="btn-icon btn-ghost btn-sm" aria-label="Close">
-              <XIcon className="w-5 h-5 text-slate-400" />
+              <XIcon className="w-5 h-5 text-slate-600" />
             </button>
           </div>
         </div>
@@ -147,15 +147,15 @@ export function StructuredClinicalAiReview({ isOpen, data: initialData, onClose,
         {/* Scrollable Body */}
         <div className="flex-1 overflow-y-auto space-y-4 pr-1">
           {/* Safety Callout */}
-          <div className="p-3 rounded-xl bg-amber-950/30 border border-amber-500/30 flex items-start gap-3">
-            <AlertIcon className="w-5 h-5 text-amber-400 flex-shrink-0 mt-0.5" />
-            <div className="text-xs text-slate-300 leading-relaxed">
-              <span className="font-semibold text-amber-300">Clinical Safety Mandate:</span> Review, modify, or reject AI-extracted values below. Once approved, the verified data will be formatted into your consultation notes.
+          <div className="p-3 rounded-xl bg-amber-50/30 border border-amber-500/30 flex items-start gap-3">
+            <AlertIcon className="w-5 h-5 text-amber-700 flex-shrink-0 mt-0.5" />
+            <div className="text-xs text-slate-700 leading-relaxed">
+              <span className="font-semibold text-amber-700">Clinical Safety Mandate:</span> Review, modify, or reject AI-extracted values below. Once approved, the verified data will be formatted into your consultation notes.
             </div>
             <button
               type="button"
               onClick={verifyAllFields}
-              className="btn-sm btn-secondary text-xs text-emerald-400 hover:text-white flex-shrink-0 whitespace-nowrap ml-auto"
+              className="btn-sm btn-secondary text-xs text-emerald-700 hover:text-ink flex-shrink-0 whitespace-nowrap ml-auto"
             >
               <CheckIcon className="w-3.5 h-3.5" />
               Verify All Fields
@@ -165,11 +165,11 @@ export function StructuredClinicalAiReview({ isOpen, data: initialData, onClose,
           {/* 1. Chief Complaint */}
           <div className="p-4 rounded-xl bg-surface border border-surface-border space-y-2">
             <div className="flex items-center justify-between">
-              <span className="text-xs font-bold uppercase tracking-wider text-slate-400 font-mono">
+              <span className="text-xs font-bold uppercase tracking-wider text-slate-600 font-sans">
                 1. Chief Complaint
               </span>
               <div className="flex items-center gap-2">
-                <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-cyan-950 border border-cyan-800 text-cyan-300">
+                <span className="text-xs font-sans px-2 py-0.5 rounded bg-cyan-50 border border-cyan-200 text-cyan-700">
                   {Math.round(data.chiefComplaint.confidence * 100)}% Confidence
                 </span>
                 <button
@@ -177,8 +177,8 @@ export function StructuredClinicalAiReview({ isOpen, data: initialData, onClose,
                   onClick={toggleVerifyChiefComplaint}
                   className={`px-2.5 py-1 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition ${
                     data.chiefComplaint.verified
-                      ? 'bg-emerald-950 border border-emerald-500 text-emerald-300'
-                      : 'bg-surface-card border border-surface-border text-slate-400 hover:text-white'
+                      ? 'bg-emerald-50 border border-emerald-500 text-emerald-700'
+                      : 'bg-surface-card border border-surface-border text-slate-600 hover:text-ink'
                   }`}
                 >
                   <CheckIcon className="w-3.5 h-3.5" />
@@ -193,13 +193,13 @@ export function StructuredClinicalAiReview({ isOpen, data: initialData, onClose,
                 ...prev,
                 chiefComplaint: { ...prev.chiefComplaint, value: e.target.value, edited: true },
               }))}
-              className="input text-sm font-semibold text-white bg-surface-card"
+              className="input text-sm font-semibold text-ink bg-surface-card"
             />
           </div>
 
           {/* 2. Extracted Vitals */}
           <div className="p-4 rounded-xl bg-surface border border-surface-border space-y-3">
-            <span className="text-xs font-bold uppercase tracking-wider text-slate-400 font-mono">
+            <span className="text-xs font-bold uppercase tracking-wider text-slate-600 font-sans">
               2. Parsed Vital Signs
             </span>
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2.5">
@@ -211,12 +211,12 @@ export function StructuredClinicalAiReview({ isOpen, data: initialData, onClose,
                 { label: 'Resp Rate', val: data.vitals.respiratoryRate?.value, unit: '/min', conf: data.vitals.respiratoryRate?.confidence },
               ].map(vital => (
                 <div key={vital.label} className="p-2.5 rounded-xl bg-surface-card border border-surface-border text-center space-y-1">
-                  <span className="text-[10px] text-slate-400 block font-mono">{vital.label}</span>
-                  <span className="text-sm font-bold text-white block">
+                  <span className="text-xs text-slate-600 block font-sans">{vital.label}</span>
+                  <span className="text-sm font-bold text-ink block">
                     {vital.val !== undefined ? `${vital.val} ${vital.unit}` : '—'}
                   </span>
                   {vital.conf && (
-                    <span className="text-[9px] font-mono text-cyan-400">
+                    <span className="text-xs font-sans text-cyan-700">
                       {Math.round(vital.conf * 100)}% conf
                     </span>
                   )}
@@ -228,12 +228,12 @@ export function StructuredClinicalAiReview({ isOpen, data: initialData, onClose,
           {/* 3. Symptoms */}
           {data.symptoms.value.length > 0 && (
             <div className="p-4 rounded-xl bg-surface border border-surface-border space-y-2">
-              <span className="text-xs font-bold uppercase tracking-wider text-slate-400 font-mono">
+              <span className="text-xs font-bold uppercase tracking-wider text-slate-600 font-sans">
                 3. Detected Symptoms
               </span>
               <div className="flex flex-wrap gap-2 pt-1">
                 {data.symptoms.value.map(s => (
-                  <span key={s} className="px-3 py-1 rounded-full text-xs bg-cyan-950/70 border border-cyan-800 text-cyan-300 capitalize flex items-center gap-1.5 font-mono">
+                  <span key={s} className="px-3 py-1 rounded-full text-xs bg-cyan-50/70 border border-cyan-200 text-cyan-700 capitalize flex items-center gap-1.5 font-sans">
                     <span>{s}</span>
                   </span>
                 ))}
@@ -244,21 +244,21 @@ export function StructuredClinicalAiReview({ isOpen, data: initialData, onClose,
           {/* 4. Medications */}
           {data.medications.length > 0 && (
             <div className="p-4 rounded-xl bg-surface border border-surface-border space-y-2">
-              <span className="text-xs font-bold uppercase tracking-wider text-slate-400 font-mono">
+              <span className="text-xs font-bold uppercase tracking-wider text-slate-600 font-sans">
                 4. Extracted Medications
               </span>
               <div className="space-y-2">
                 {data.medications.map((med, idx) => (
                   <div key={idx} className="flex items-center justify-between p-2.5 rounded-lg bg-surface-card border border-surface-border">
                     <div className="flex items-center gap-2 min-w-0">
-                      <span className="font-bold text-white text-xs">{med.drug}</span>
+                      <span className="font-bold text-ink text-xs">{med.drug}</span>
                       {med.dosage && (
-                        <span className="text-[11px] font-mono px-2 py-0.5 rounded bg-surface border border-surface-border text-slate-300">
+                        <span className="text-xs font-sans px-2 py-0.5 rounded bg-surface border border-surface-border text-slate-700">
                           {med.dosage}
                         </span>
                       )}
                       {med.frequency && (
-                        <span className="text-[11px] font-mono text-cyan-400">
+                        <span className="text-xs font-sans text-cyan-700">
                           {med.frequency}
                         </span>
                       )}
@@ -268,8 +268,8 @@ export function StructuredClinicalAiReview({ isOpen, data: initialData, onClose,
                       onClick={() => toggleVerifyMed(idx)}
                       className={`px-2.5 py-1 rounded-lg text-xs font-semibold flex items-center gap-1 transition ${
                         med.verified
-                          ? 'bg-emerald-950 border border-emerald-500 text-emerald-300'
-                          : 'bg-surface border border-surface-border text-slate-400 hover:text-white'
+                          ? 'bg-emerald-50 border border-emerald-500 text-emerald-700'
+                          : 'bg-surface border border-surface-border text-slate-600 hover:text-ink'
                       }`}
                     >
                       <CheckIcon className="w-3.5 h-3.5" />
@@ -285,14 +285,14 @@ export function StructuredClinicalAiReview({ isOpen, data: initialData, onClose,
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="p-4 rounded-xl bg-surface border border-surface-border space-y-2">
               <div className="flex items-center justify-between">
-                <span className="text-xs font-bold uppercase tracking-wider text-slate-400 font-mono">
+                <span className="text-xs font-bold uppercase tracking-wider text-slate-600 font-sans">
                   5. Clinical Assessment
                 </span>
                 <button
                   type="button"
                   onClick={toggleVerifyAssessment}
-                  className={`px-2 py-0.5 rounded text-[11px] font-semibold ${
-                    data.assessment.verified ? 'text-emerald-400 bg-emerald-950' : 'text-slate-400 hover:text-white'
+                  className={`px-2 py-0.5 rounded text-xs font-semibold ${
+                    data.assessment.verified ? 'text-emerald-700 bg-emerald-50' : 'text-slate-600 hover:text-ink'
                   }`}
                 >
                   {data.assessment.verified ? '✓ Verified' : 'Verify'}
@@ -311,14 +311,14 @@ export function StructuredClinicalAiReview({ isOpen, data: initialData, onClose,
 
             <div className="p-4 rounded-xl bg-surface border border-surface-border space-y-2">
               <div className="flex items-center justify-between">
-                <span className="text-xs font-bold uppercase tracking-wider text-slate-400 font-mono">
+                <span className="text-xs font-bold uppercase tracking-wider text-slate-600 font-sans">
                   6. Treatment & Rx Plan
                 </span>
                 <button
                   type="button"
                   onClick={toggleVerifyPlan}
-                  className={`px-2 py-0.5 rounded text-[11px] font-semibold ${
-                    data.plan.verified ? 'text-emerald-400 bg-emerald-950' : 'text-slate-400 hover:text-white'
+                  className={`px-2 py-0.5 rounded text-xs font-semibold ${
+                    data.plan.verified ? 'text-emerald-700 bg-emerald-50' : 'text-slate-600 hover:text-ink'
                   }`}
                 >
                   {data.plan.verified ? '✓ Verified' : 'Verify'}
@@ -350,7 +350,7 @@ export function StructuredClinicalAiReview({ isOpen, data: initialData, onClose,
           <button
             type="button"
             onClick={handleApply}
-            className="btn-primary py-2.5 px-6 text-xs font-bold shadow-xl shadow-cyan-950/50 flex items-center gap-2"
+            className="btn-primary py-2.5 px-6 text-xs font-bold shadow-xl shadow-slate-200/40 flex items-center gap-2"
           >
             <CheckIcon className="w-4 h-4" />
             <span>Confirm & Apply to Consultation Note</span>

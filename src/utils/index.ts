@@ -159,6 +159,18 @@ export async function verifyPin(pin: string, salt: string, expectedHash: string)
   return computed === expectedHash;
 }
 
+/** Compute salted cryptographic hash for security recovery answer (case-insensitive & trimmed) */
+export async function hashSecurityAnswer(answer: string, salt: string): Promise<string> {
+  const normalized = answer.trim().toLowerCase();
+  return sha256Hex(`ruralcare:${salt}:${normalized}:clinical_recovery`);
+}
+
+/** Verify security recovery answer */
+export async function verifySecurityAnswer(answer: string, salt: string, expectedHash: string): Promise<boolean> {
+  const computed = await hashSecurityAnswer(answer, salt);
+  return computed === expectedHash;
+}
+
 
 /** ISO-8601 timestamp string */
 export const now = (): string => new Date().toISOString();

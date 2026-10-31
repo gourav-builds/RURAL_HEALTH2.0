@@ -1,45 +1,21 @@
-import { AlertIcon } from '@/components/Icons';
+import { useState } from 'react';
+import { Link } from 'react-router-dom';
+import { AlertIcon, XIcon } from '@/components/Icons';
 import { useDevice } from '@/context/DeviceContext';
 import { STORAGE_WARN_PERCENT } from '@/db';
 import { formatBytes } from '@/utils';
 
-
 export function StorageWarningBanner() {
   const { storageInfo } = useDevice();
+  const [dismissed, setDismissed] = useState(false);
   if (!storageInfo) return null;
   const { percentUsed, available, isPersistent } = storageInfo;
-
-  const showLowStorageWarning = percentUsed !== null && percentUsed >= STORAGE_WARN_PERCENT;
-  const showPersistenceWarning = !isPersistent;
-
-  if (!showLowStorageWarning && !showPersistenceWarning) return null;
-
-  return (
-    <div className="px-6 pt-4 space-y-2 animate-fade-in" role="alert">
-      {showLowStorageWarning && (
-        <div className="alert-warning">
-          <AlertIcon className="w-4 h-4 flex-shrink-0 mt-0.5" />
-          <div>
-            <p className="font-semibold text-amber-300">Storage almost full ({percentUsed}% used)</p>
-            <p className="mt-0.5 text-amber-400/80">
-              {available !== null ? `${formatBytes(available)} remaining.` : ''}
-              {' '}Go to <strong>Settings → Storage</strong> to free up space. New records may fail to save.
-            </p>
-          </div>
-        </div>
-      )}
-      {showPersistenceWarning && (
-        <div className="alert-warning">
-          <AlertIcon className="w-4 h-4 flex-shrink-0 mt-0.5" />
-          <div>
-            <p className="font-semibold text-amber-300">Storage not persistent</p>
-            <p className="mt-0.5 text-amber-400/80">
-              The browser may clear offline records when low on storage.
-              Allow persistent storage in your browser settings to protect patient data.
-            </p>
-          </div>
-        </div>
-      )}
-    </div>
-  );
+  const low = percentUsed !== null && percentUsed >= STORAGE_WARN_PERCENT;
+  if (!low && (isPersistent || dismissed)) return null;
+  return <div className="storage-notice-wrap"><div className={`storage-notice ${low ? 'storage-critical' : ''}`} role={low ? 'alert' : 'status'}>
+    <AlertIcon className="w-4 h-4" />
+    <span>{low ? `Storage almost full · ${percentUsed}% used` : 'Storage not persistent'}<span className="storage-notice-detail">{low ? ` · ${available !== null ? formatBytes(available) + ' remaining' : 'New records may fail to save'}` : ' · Protect your offline records'}</span></span>
+    <Link to="/settings" className="storage-fix" aria-label="Fix storage settings">Fix <span aria-hidden="true">↗</span></Link>
+    {!low && <button onClick={() => setDismissed(true)} aria-label="Dismiss storage notice"><XIcon className="w-3.5 h-3.5" /></button>}
+  </div></div>;
 }

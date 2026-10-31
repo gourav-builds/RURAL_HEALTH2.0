@@ -1,230 +1,45 @@
-import { useState, useEffect, useCallback } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { useState,useEffect,useCallback } from 'react';
+import { Link } from 'react-router-dom';
+import { useLiveQuery } from 'dexie-react-hooks';
+import { Search,Plus,LayoutGrid,List,Download,ArrowUpRight,CalendarDays } from 'lucide-react';
+import { db } from '@/db';
 import { searchPatients } from '@/db/patients';
 import { useDevice } from '@/context/DeviceContext';
 import { useToast } from '@/context/ToastContext';
-import { formatDate, calcAge } from '@/utils';
+import { calcAge,formatDate } from '@/utils';
 import { SyncBadge } from '@/components/StatusBadges';
+import { EmptyIllustration } from '@/components/PremiumMotion';
+import { GlowCard,SummaryStrip,SegmentedFilter,weekValues } from '@/components/ClinicalVisuals';
+import { PatientDrawer } from '@/components/PatientDrawer';
 import type { PatientListItem } from '@/types';
-import {
-  SearchIcon, PlusIcon, UsersIcon,
-  ChevronRightIcon, ClipboardIcon,
-} from '@/components/Icons';
 
-type FilterType = 'all' | 'local' | 'synced';
-
-function PatientCard({ patient }: { patient: PatientListItem }) {
-  return (
-    <div className="card-sm flex items-center justify-between gap-4 hover:border-cyan-500/40 hover:bg-surface-hover transition-all duration-150 group">
-      <Link
-        to={`/patients/${patient.id}`}
-        className="flex items-center gap-4 flex-1 min-w-0"
-        aria-label={`View ${patient.firstName} ${patient.lastName}'s medical profile`}
-      >
-        {/* Avatar with gradient border */}
-        <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-cyan-600 via-sky-700 to-indigo-800 flex items-center justify-center text-white font-extrabold text-sm flex-shrink-0 shadow-lg shadow-black/40 border border-white/10 group-hover:scale-105 transition-transform">
-          {patient.firstName[0]}{patient.lastName[0]}
-        </div>
-
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2">
-            <p className="font-bold text-white text-sm group-hover:text-cyan-300 transition-colors">
-              {patient.firstName} {patient.lastName}
-            </p>
-            <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-slate-800 text-slate-300 border border-slate-700">
-              {calcAge(patient.dateOfBirth)} yrs • {patient.sex}
-            </span>
-          </div>
-          <div className="flex items-center gap-2 text-xs text-slate-400 mt-1">
-            <span>DOB: {formatDate(patient.dateOfBirth)}</span>
-            <span>•</span>
-            <span className="font-mono text-slate-500 text-[11px] truncate">
-              ID: {patient.id.slice(0, 8)}
-            </span>
-          </div>
-        </div>
-      </Link>
-
-      {/* Actions & Status */}
-      <div className="flex items-center gap-3 flex-shrink-0">
-        <SyncBadge status={patient.syncStatus} />
-        <Link
-          to={`/consultations/new?patientId=${patient.id}`}
-          className="btn-ghost btn-sm text-cyan-400 hover:text-white hover:bg-cyan-950/80 border border-cyan-800/60 hidden sm:inline-flex items-center gap-1.5"
-          title="Start consultation"
-        >
-          <ClipboardIcon className="w-3.5 h-3.5" />
-          <span>Consult</span>
-        </Link>
-        <Link to={`/patients/${patient.id}`} className="text-slate-500 group-hover:text-cyan-400 p-1">
-          <ChevronRightIcon className="w-4 h-4" />
-        </Link>
-      </div>
-    </div>
-  );
-}
-
-export function PatientsScreen() {
-  const { device } = useDevice();
-  const { addToast } = useToast();
-  const navigate = useNavigate();
-  const [query, setQuery] = useState('');
-  const [filter, setFilter] = useState<FilterType>('all');
-  const [patients, setPatients] = useState<PatientListItem[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-
-  const load = useCallback(async (q: string) => {
-    setIsLoading(true);
-    try {
-      const results = await searchPatients(q, device?.orgId);
-      setPatients(results);
-    } finally {
-      setIsLoading(false);
-    }
-  }, [device?.orgId]);
-
-  // Debounced search
-  useEffect(() => {
-    const timer = setTimeout(() => load(query), 200);
-    return () => clearTimeout(timer);
-  }, [query, load]);
-
-  // Initial load
-  useEffect(() => { load(''); }, [load]);
-
-  const filteredPatients = patients.filter(p => {
-    if (filter === 'local') return p.syncStatus === 'local';
-    if (filter === 'synced') return p.syncStatus === 'synced';
-    return true;
-  });
-
-  const handleExportCSV = () => {
-    if (patients.length === 0) return;
-    const headers = ['ID', 'First Name', 'Last Name', 'DOB', 'Sex', 'Sync Status', 'Created At'];
-    const rows = patients.map(p => [
-      p.id,
-      p.firstName,
-      p.lastName,
-      p.dateOfBirth,
-      p.sex,
-      p.syncStatus,
-      p.createdAt,
-    ]);
-    const csvContent = [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.setAttribute('href', url);
-    link.setAttribute('download', `ruralcare_patients_${new Date().toISOString().slice(0, 10)}.csv`);
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-
-    addToast({
-      type: 'success',
-      title: 'Triage CSV Exported',
-      message: `${patients.length} patient records exported for field roster.`,
-    });
+export function PatientsScreen(){
+  const {device}=useDevice(),{addToast}=useToast();
+  const [query,setQuery]=useState(''),[filter,setFilter]=useState('all'),[view,setView]=useState<'list'|'grid'>('list');
+  const [selected,setSelected]=useState<string|null>(null),[rows,setRows]=useState<PatientListItem[]>([]),[loading,setLoading]=useState(true),[error,setError]=useState('');
+  const all=useLiveQuery(()=>device?db.patients.where('orgId').equals(device.orgId).filter(p=>!p.deletedAt).toArray():[],[device?.orgId]);
+  const visits=useLiveQuery(()=>device?db.consultations.where('orgId').equals(device.orgId).filter(c=>!c.deletedAt).toArray():[],[device?.orgId],[]);
+  const load=useCallback(async(q:string)=>{setLoading(true);setError('');try{setRows(await searchPatients(q,device?.orgId));}catch{setError('Patient records could not be loaded. Please try again.');}finally{setLoading(false);}},[device?.orgId]);
+  useEffect(()=>{const timer=setTimeout(()=>void load(query),200);return()=>clearTimeout(timer);},[query,load,all?.length]);
+  const follow=new Set(visits.filter(c=>c.clinicalStatus==='awaiting_review').map(c=>c.patientId));
+  const patients=(all||[]),local=patients.filter(p=>p.syncStatus==='local'),synced=patients.filter(p=>p.syncStatus==='synced');
+  const visible=rows.filter(p=>filter==='all'||(filter==='follow'?follow.has(p.id):p.syncStatus===filter));
+  const exportRoster=()=>{
+    if(!rows.length)return;
+    const data=[['ID','First Name','Last Name','DOB','Sex','Sync Status','Created At'],...rows.map(p=>[p.id,p.firstName,p.lastName,p.dateOfBirth,p.sex,p.syncStatus,p.createdAt])];
+    const url=URL.createObjectURL(new Blob([data.map(r=>r.map(v=>'"'+v.replaceAll('"','""')+'"').join(',')).join('\n')],{type:'text/csv;charset=utf-8;'}));
+    const link=document.createElement('a');link.href=url;link.download='ruralcare-patients.csv';link.click();URL.revokeObjectURL(url);
+    addToast({type:'success',title:'Patient roster exported',message:`${rows.length} records included.`});
   };
-
-  return (
-    <div className="space-y-6 animate-fade-in max-w-5xl">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <h2 className="section-title text-2xl font-extrabold tracking-tight">Patient Directory</h2>
-          <p className="section-subtitle mt-0.5">
-            {patients.length} registered patient{patients.length !== 1 ? 's' : ''} stored locally in station IndexedDB
-          </p>
-        </div>
-        <div className="flex items-center gap-2.5">
-          <button
-            onClick={handleExportCSV}
-            className="btn-secondary btn-sm"
-            title="Export local patient roster"
-          >
-            Export Roster
-          </button>
-          <button onClick={() => navigate('/patients/new')} className="btn-primary shadow-lg shadow-sky-900/30">
-            <PlusIcon className="w-4 h-4" /> New Patient
-          </button>
-        </div>
-      </div>
-
-      {/* Search & Filter Bar */}
-      <div className="card-sm space-y-3 bg-surface-card border-surface-border">
-        <div className="relative">
-          <SearchIcon className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
-          <input
-            id="patient-search"
-            type="search"
-            className="input pl-10 bg-surface border-surface-borderLight text-white placeholder-slate-400"
-            placeholder="Search by first name, last name, phone number, or clinical ID…"
-            value={query}
-            onChange={e => setQuery(e.target.value)}
-            aria-label="Search patients"
-            autoComplete="off"
-          />
-        </div>
-
-        {/* Filter Pills */}
-        <div className="flex items-center gap-2 pt-1 border-t border-surface-border text-xs">
-          <span className="text-slate-400 font-mono text-[11px] mr-1">Filter:</span>
-          {(['all', 'local', 'synced'] as FilterType[]).map(tab => (
-            <button
-              key={tab}
-              onClick={() => setFilter(tab)}
-              className={`px-3 py-1 rounded-lg font-medium transition-all capitalize ${
-                filter === tab
-                  ? 'bg-cyan-950 border border-cyan-500/50 text-cyan-300 font-semibold shadow-sm'
-                  : 'text-slate-400 hover:text-white hover:bg-surface'
-              }`}
-            >
-              {tab === 'all' ? `All (${patients.length})` : tab === 'local' ? `Saved on device (${patients.filter(p => p.syncStatus === 'local').length})` : `Synced (${patients.filter(p => p.syncStatus === 'synced').length})`}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      {/* Results */}
-      {isLoading ? (
-        <div className="space-y-3">
-          {[1, 2, 3, 4].map(i => (
-            <div key={i} className="card-sm flex items-center gap-4">
-              <div className="skeleton w-12 h-12 rounded-2xl" />
-              <div className="flex-1 space-y-2">
-                <div className="skeleton h-4 w-48 rounded" />
-                <div className="skeleton h-3 w-32 rounded" />
-              </div>
-            </div>
-          ))}
-        </div>
-      ) : filteredPatients.length === 0 ? (
-        <div className="card">
-          <div className="empty-state py-12">
-            <div className="empty-icon"><UsersIcon className="w-7 h-7" /></div>
-            {query ? (
-              <>
-                <p className="text-slate-200 font-semibold text-base">No patients match "{query}"</p>
-                <p className="text-slate-400 text-sm">Check spelling or try a phone number or partial name</p>
-                <button onClick={() => setQuery('')} className="btn-secondary btn-sm mt-2">Clear search query</button>
-              </>
-            ) : (
-              <>
-                <p className="text-slate-200 font-semibold text-base">No patients registered in this station</p>
-                <p className="text-slate-400 text-sm">Add your first patient record to begin offline consultations</p>
-                <button onClick={() => navigate('/patients/new')} className="btn-primary mt-3">
-                  <PlusIcon className="w-4 h-4" /> Register Patient Intake
-                </button>
-              </>
-            )}
-          </div>
-        </div>
-      ) : (
-        <div className="space-y-2.5">
-          {filteredPatients.map(p => <PatientCard key={p.id} patient={p} />)}
-        </div>
-      )}
-    </div>
-  );
+  return <div className="page-stack patient-page"><header className="page-heading"><div><p className="eyebrow">YOUR COMMUNITY OF CARE</p><h1>Patients<span className="greeting-dot">.</span></h1><p>Every person. A complete care story.</p></div><div className="heading-actions"><button className="btn-secondary" onClick={exportRoster} disabled={!rows.length}><Download size={16}/>Export</button><Link className="btn-primary" to="/patients/new"><Plus size={17}/>Register patient</Link></div></header>
+    <SummaryStrip items={[{label:'Total patients',value:patients.length,values:weekValues(patients.map(p=>p.updatedAt))},{label:'On this device',value:local.length,values:weekValues(local.map(p=>p.updatedAt))},{label:'Synced records',value:synced.length,values:weekValues(synced.map(p=>p.updatedAt))},{label:'Follow-up reviews',value:follow.size,values:weekValues(visits.filter(c=>c.clinicalStatus==='awaiting_review').map(c=>c.updatedAt))}]}/>
+    <div className="directory-toolbar"><div className="search-field"><Search size={18}/><input className="input" aria-label="Search patients" placeholder="Search a patient by name or phone…" type="search" value={query} onChange={e=>setQuery(e.target.value)}/></div><div className="view-control"><button aria-label="List view" aria-pressed={view==='list'} onClick={()=>setView('list')}><List size={18}/></button><button aria-label="Grid view" aria-pressed={view==='grid'} onClick={()=>setView('grid')}><LayoutGrid size={18}/></button></div></div>
+    <div className="filter-row"><SegmentedFilter value={filter} onChange={setFilter} options={[{id:'all',label:'All patients',count:patients.length},{id:'local',label:'On device',count:local.length},{id:'synced',label:'Synced',count:synced.length},{id:'follow',label:'Follow-up',count:follow.size}]}/><span>{visible.length} records</span></div>
+    {error?<div className="alert-error" role="alert"><p>{error}</p><button className="btn-secondary" onClick={()=>void load(query)}>Try again</button></div>:loading?<div className="patient-list">{[0,1,2].map(n=><div className="skeleton h-28" key={n}/>)}</div>:visible.length?<div className={`patient-list ${view==='grid'?'patient-grid':''}`}>{visible.map((p,i)=>{
+      const full=patients.find(v=>v.id===p.id),last=[...visits].filter(c=>c.patientId===p.id).sort((a,b)=>b.createdAt.localeCompare(a.createdAt))[0];
+      return <GlowCard key={p.id} className="patient-record-card"><button className="patient-record-main" onClick={()=>setSelected(p.id)} aria-label={`Open ${p.firstName} ${p.lastName} overview`}><span className={`avatar-ring avatar-tone-${i%4}`}>{p.firstName[0]}{p.lastName[0]}</span><div className="patient-name-block"><h3>{p.firstName} {p.lastName}</h3><span className="record-id">{p.id.startsWith('RC-')?p.id:p.id.slice(0,8)}</span><div className="demographic-chips"><span>{calcAge(p.dateOfBirth)} years</span><span>{p.sex.replaceAll('_',' ')}</span></div></div><div className="patient-condition"><span className="condition-tag">{full?.knownConditions||'No conditions documented'}</span><small><CalendarDays size={13}/>{last?formatDate(last.createdAt):'No visits yet'}</small></div></button><div className="patient-record-actions"><SyncBadge status={p.syncStatus}/><Link className="quick-consult" to={`/consultations/new?patientId=${p.id}`}><Plus size={15}/>Consult</Link><button onClick={()=>setSelected(p.id)} className="record-open" aria-label={`View ${p.firstName}'s care history`}><ArrowUpRight size={19}/></button></div></GlowCard>;
+    })}</div>:<div className="card designed-empty"><EmptyIllustration/><h3>{patients.length?'No matching patients':'Your next care story starts here'}</h3><p>{patients.length?'Try another name or a different filter.':'Register a patient to bring their care history together.'}</p>{patients.length?<button className="btn-secondary" onClick={()=>{setQuery('');setFilter('all');}}>Clear filters</button>:<Link className="btn-primary" to="/patients/new"><Plus size={17}/>Register patient</Link>}</div>}
+    <PatientDrawer patient={patients.find(p=>p.id===selected)||null} visits={visits.filter(c=>c.patientId===selected)} onClose={()=>setSelected(null)}/>
+  </div>;
 }
+

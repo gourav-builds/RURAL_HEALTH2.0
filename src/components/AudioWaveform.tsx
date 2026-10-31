@@ -70,7 +70,7 @@ export function AudioWaveform({ isRecording, className = '' }: AudioWaveformProp
       ref={canvasRef}
       width={280}
       height={36}
-      className={`rounded-lg bg-slate-950/60 border border-slate-800 ${className}`}
+      className={`rounded-lg bg-slate-50/60 border border-slate-200 ${className}`}
     />
   );
 }

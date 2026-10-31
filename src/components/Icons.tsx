@@ -54,3 +54,4 @@ export const FileTextIcon     = icon(<><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0
 export const LogOutIcon       = icon(<><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></>);
 export const UploadCloudIcon  = icon(<><polyline points="16 16 12 12 8 16"/><line x1="12" y1="12" x2="12" y2="21"/><path d="M20.39 18.39A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.3"/></>);
 export const CopyIcon         = icon(<><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></>);
+export const KeyIcon          = icon(<><path d="m21 2-2 2m-1.5 1.5L16 7l-1.5-1.5L13 7l-1.5-1.5L10 7l-2-2a5 5 0 1 0-5 5l8 8a2 2 0 0 0 2.8 0L21 4.8A2 2 0 0 0 21 2Z"/><circle cx="7.5" cy="7.5" r=".5" fill="currentColor"/></>);

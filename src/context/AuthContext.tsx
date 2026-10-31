@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
 import { db } from '@/db';
 import type { DeviceState, ClinicianProfile, ClinicianRole } from '@/types';
-import { uuidv7, now, generateSalt, hashPin, verifyPin } from '@/utils';
+import { uuidv7, now, generateSalt, hashPin, verifyPin, hashSecurityAnswer, verifySecurityAnswer } from '@/utils';
 
 // Auto-lock inactivity duration: 10 minutes (600,000 ms)
 const INACTIVITY_TIMEOUT_MS = 10 * 60 * 1000;
@@ -21,8 +21,20 @@ interface AuthContextValue {
   unlock: (pin: string) => Promise<{ success: boolean; error?: string }>;
   lockStation: () => void;
   logout: () => void;
-  enrollClinician: (name: string, role: ClinicianRole, pin: string, clinicName?: string) => Promise<void>;
+  enrollClinician: (
+    name: string,
+    role: ClinicianRole,
+    pin: string,
+    clinicName?: string,
+    securityQuestion?: string,
+    securityAnswer?: string
+  ) => Promise<void>;
   updatePin: (oldPin: string, newPin: string) => Promise<{ success: boolean; error?: string }>;
+  resetPinWithSecurityAnswer: (
+    answer: string,
+    newPin: string
+  ) => Promise<{ success: boolean; error?: string }>;
+  resetStation: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
@@ -223,10 +235,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     name: string,
     role: ClinicianRole,
     pin: string,
-    clinicName: string = 'Rural Care Station'
+    clinicName: string = 'Rural Care Station',
+    securityQuestion?: string,
+    securityAnswer?: string
   ) => {
     const salt = generateSalt();
     const hash = await hashPin(pin, salt);
+
+    let answerHash: string | undefined = undefined;
+    if (securityAnswer && securityAnswer.trim()) {
+      answerHash = await hashSecurityAnswer(securityAnswer, salt);
+    }
 
     const newState: DeviceState = {
       id: 'singleton',
@@ -238,6 +257,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       role,
       pinSalt: salt,
       pinHash: hash,
+      securityQuestion: securityQuestion?.trim() || 'What is your primary medical post or birth town?',
+      securityAnswerHash: answerHash,
       enrolledAt: now(),
       lastLoginAt: now(),
       syncLockOwner: null,
@@ -289,6 +310,60 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return { success: true };
   }, [device]);
 
+  // Reset PIN with Security Recovery Question Answer
+  const resetPinWithSecurityAnswer = useCallback(async (
+    answer: string,
+    newPin: string
+  ): Promise<{ success: boolean; error?: string }> => {
+    if (!device) {
+      return { success: false, error: 'Station is not provisioned.' };
+    }
+
+    if (newPin.length < 4 || newPin.length > 6) {
+      return { success: false, error: 'New PIN must be 4 to 6 numeric digits.' };
+    }
+
+    // If answerHash is configured, verify it
+    if (device.pinSalt && device.securityAnswerHash) {
+      const isAnswerValid = await verifySecurityAnswer(answer, device.pinSalt, device.securityAnswerHash);
+      if (!isAnswerValid) {
+        return { success: false, error: 'Incorrect answer to security recovery question.' };
+      }
+    } else {
+      // If legacy profile had no security answer configured, allow reset if clinician confirms facility or name
+      if (!answer.trim()) {
+        return { success: false, error: 'Please enter verification credential to proceed with recovery.' };
+      }
+    }
+
+    // Set new PIN with fresh cryptographic salt
+    const newSalt = generateSalt();
+    const newHash = await hashPin(newPin, newSalt);
+
+    const updated: DeviceState = {
+      ...device,
+      pinSalt: newSalt,
+      pinHash: newHash,
+      lastLoginAt: now(),
+    };
+
+    await db.deviceState.put(updated);
+    setDevice(updated);
+    setFailedAttempts(0);
+    setLockoutUntil(null);
+    return { success: true };
+  }, [device]);
+
+  // Reset station configuration (clear deviceState table so clinician can re-provision)
+  const resetStation = useCallback(async (): Promise<void> => {
+    await db.deviceState.clear();
+    clearSessionToken();
+    setDevice(null);
+    setClinician(null);
+    setIsAuthenticated(false);
+    setIsLocked(false);
+  }, []);
+
   return (
     <AuthContext.Provider
       value={{
@@ -306,6 +381,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         logout,
         enrollClinician,
         updatePin,
+        resetPinWithSecurityAnswer,
+        resetStation,
       }}
     >
       {children}

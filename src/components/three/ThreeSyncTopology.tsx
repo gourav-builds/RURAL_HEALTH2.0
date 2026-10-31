@@ -234,15 +234,15 @@ export function ThreeSyncTopology({ isOnline, isSyncing, operations }: ThreeSync
 
       {/* 3D Topology HUD Overlay */}
       <div className="absolute top-3 left-3 flex items-center gap-2 pointer-events-none">
-        <span className="text-xs font-mono font-semibold text-cyan-400 bg-slate-900/80 px-2.5 py-1 rounded-lg border border-cyan-800/60">
+        <span className="text-xs font-sans font-semibold text-cyan-400 bg-slate-900/80 px-2.5 py-1 rounded-lg border border-cyan-800/60">
           3D Distributed Mesh Topology
         </span>
-        <span className="text-[11px] font-mono text-slate-400">
+        <span className="text-[11px] font-sans text-slate-400">
           {operations.length} outbox queue packets
         </span>
       </div>
 
-      <div className="absolute bottom-3 left-3 flex items-center gap-4 text-[11px] font-mono pointer-events-none bg-slate-900/80 px-3 py-1.5 rounded-lg border border-surface-border">
+      <div className="absolute bottom-3 left-3 flex items-center gap-4 text-[11px] font-sans pointer-events-none bg-slate-900/80 px-3 py-1.5 rounded-lg border border-surface-border">
         <div className="flex items-center gap-1.5">
           <span className="w-2.5 h-2.5 rounded-full bg-cyan-400" />
           <span className="text-slate-300">Local Device Node</span>

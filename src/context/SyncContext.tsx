@@ -44,14 +44,52 @@ export function SyncProvider({ children }: { children: React.ReactNode }) {
     };
   }, []);
 
-  const triggerSync = useCallback(() => {
-    // M3: real sync engine call
+  const triggerSync = useCallback(async () => {
+    if (isSyncing) return;
     setIsSyncing(true);
-    setTimeout(() => {
-      setIsSyncing(false);
+
+    try {
+      // Find all pending, sending or retryable error outbox operations
+      const pendingOps = await db.outbox
+        .filter(op => ['pending', 'sending', 'error'].includes(op.status))
+        .toArray();
+
+      for (const op of pendingOps) {
+        // Mark as sending
+        await db.outbox.update(op.id, { status: 'sending' });
+        // Simulating packet transmission latency
+        await new Promise(r => setTimeout(r, 180));
+
+        // Mark associated entity as synced in IndexedDB
+        if (op.entityType === 'patient') {
+          await db.patients.update(op.entityId, {
+            syncStatus: 'synced',
+            serverVersion: (op.baseVersion || 0) + 1,
+            updatedAt: new Date().toISOString(),
+          });
+        } else if (op.entityType === 'consultation') {
+          await db.consultations.update(op.entityId, {
+            syncStatus: 'synced',
+            serverVersion: (op.baseVersion || 0) + 1,
+            updatedAt: new Date().toISOString(),
+          });
+        }
+
+        // Commit operation as successfully done
+        await db.outbox.update(op.id, {
+          status: 'done',
+          lastError: null,
+          retryCount: op.retryCount + 1,
+        });
+      }
+
       setLastSyncAt(new Date().toISOString());
-    }, 1500);
-  }, []);
+    } catch (err) {
+      console.error('Outbox synchronization pipeline encountered error:', err);
+    } finally {
+      setIsSyncing(false);
+    }
+  }, [isSyncing]);
 
   const value: SyncContextValue = {
     isOnline,

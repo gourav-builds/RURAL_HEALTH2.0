@@ -293,7 +293,7 @@ export function ThreeAnatomyViewer({
     <div className={`relative bg-surface-card border border-surface-border rounded-2xl p-4 flex flex-col ${className}`}>
       <div className="flex items-center justify-between mb-2">
         <div>
-          <span className="text-xs font-semibold uppercase tracking-wider text-cyan-400 font-mono">
+          <span className="text-xs font-semibold uppercase tracking-wider text-cyan-400 font-sans">
             3D Anatomical Pinpointer
           </span>
           <p className="text-xs text-slate-400">Click a region to tag symptom location</p>
@@ -301,7 +301,7 @@ export function ThreeAnatomyViewer({
         <button
           onClick={resetView}
           type="button"
-          className="text-[11px] font-mono px-2 py-1 rounded bg-surface border border-surface-border hover:bg-surface-hover text-slate-400 hover:text-white transition"
+          className="text-[11px] font-sans px-2 py-1 rounded bg-surface border border-surface-border hover:bg-surface-hover text-slate-400 hover:text-white transition"
         >
           Reset View
         </button>
@@ -320,7 +320,7 @@ export function ThreeAnatomyViewer({
             <span className="font-semibold text-white">
               {hoveredRegion ? hoveredRegion.name : BODY_REGIONS.find(r => r.id === currentSelectedId)?.name}
             </span>
-            <span className="ml-2 text-cyan-400 font-mono text-[11px]">
+            <span className="ml-2 text-cyan-400 font-sans text-[11px]">
               [{hoveredRegion ? hoveredRegion.category : BODY_REGIONS.find(r => r.id === currentSelectedId)?.category}]
             </span>
             <p className="text-[11px] text-slate-400">

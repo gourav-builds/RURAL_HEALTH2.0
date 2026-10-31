@@ -27,3 +27,7 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
     <App />
   </React.StrictMode>,
 )
+
+import './premium.css'
+
+import './clinical.css';

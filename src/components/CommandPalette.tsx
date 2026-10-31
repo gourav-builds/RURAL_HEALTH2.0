@@ -59,7 +59,7 @@ export function CommandPalette({ isOpen, onClose }: CommandPaletteProps) {
   const staticActions = [
     {
       id: 'dashboard',
-      label: 'Go to Dashboard',
+      label: 'Go to Overview',
       category: 'Navigation',
       icon: HomeIcon,
       action: () => navigate('/dashboard'),
@@ -73,21 +73,21 @@ export function CommandPalette({ isOpen, onClose }: CommandPaletteProps) {
     },
     {
       id: 'new_consultation',
-      label: 'Start New Clinical Consultation',
+      label: 'Start consultation',
       category: 'Clinical Notes',
       icon: ClipboardIcon,
       action: () => navigate('/consultations/new'),
     },
     {
       id: 'sync_center',
-      label: 'Open Sync Center & 3D Topology',
+      label: 'Open Sync center',
       category: 'Network',
       icon: RefreshIcon,
       action: () => navigate('/sync'),
     },
     {
       id: 'trigger_sync',
-      label: 'Trigger Immediate Telemetry Sync',
+      label: 'Check sync status',
       category: 'Network',
       icon: RefreshIcon,
       action: () => {
@@ -97,7 +97,7 @@ export function CommandPalette({ isOpen, onClose }: CommandPaletteProps) {
     },
     {
       id: 'settings',
-      label: 'Open Station Settings & Storage',
+      label: 'Open workspace settings',
       category: 'System',
       icon: SettingsIcon,
       action: () => navigate('/settings'),
@@ -155,11 +155,11 @@ export function CommandPalette({ isOpen, onClose }: CommandPaletteProps) {
       >
         {/* Search Input bar */}
         <div className="flex items-center gap-3 px-4 py-3.5 border-b border-surface-border">
-          <SearchIcon className="w-5 h-5 text-cyan-400 flex-shrink-0" />
+          <SearchIcon className="w-5 h-5 text-cyan-700 flex-shrink-0" />
           <input
             ref={inputRef}
             type="text"
-            className="w-full bg-transparent text-white placeholder-slate-400 text-sm focus:outline-none font-sans"
+            className="w-full bg-transparent text-ink placeholder-slate-400 text-sm focus:outline-none font-sans"
             placeholder="Search patients, start consultation, jump to screen… (Esc to exit)"
             value={query}
             onChange={e => {
@@ -170,7 +170,7 @@ export function CommandPalette({ isOpen, onClose }: CommandPaletteProps) {
           />
           <button
             onClick={onClose}
-            className="text-slate-400 hover:text-white p-1 rounded-lg hover:bg-surface transition"
+            className="text-slate-600 hover:text-ink p-1 rounded-lg hover:bg-surface transition"
             aria-label="Close"
           >
             <XIcon className="w-4 h-4" />
@@ -197,17 +197,17 @@ export function CommandPalette({ isOpen, onClose }: CommandPaletteProps) {
                   onMouseEnter={() => setSelectedIndex(idx)}
                   className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-left text-xs transition-all ${
                     isSelected
-                      ? 'bg-gradient-to-r from-brand-900/60 to-surface-hover text-white border border-brand-500/30'
-                      : 'text-slate-300 hover:bg-surface hover:text-white'
+                      ? 'bg-gradient-to-r from-brand-100/60 to-surface-hover text-ink border border-brand-500/30'
+                      : 'text-slate-700 hover:bg-surface hover:text-ink'
                   }`}
                 >
                   <div className="flex items-center gap-3 min-w-0">
-                    <div className={`p-1.5 rounded-lg ${isSelected ? 'bg-brand-500/20 text-cyan-400' : 'bg-surface text-slate-400'}`}>
+                    <div className={`p-1.5 rounded-lg ${isSelected ? 'bg-brand-500/20 text-cyan-700' : 'bg-surface text-slate-600'}`}>
                       <Icon className="w-4 h-4" />
                     </div>
                     <span className="truncate font-medium">{item.label}</span>
                   </div>
-                  <span className="text-[10px] font-mono text-slate-500 uppercase tracking-wider ml-2 flex-shrink-0">
+                  <span className="text-xs font-sans text-slate-500 uppercase tracking-wider ml-2 flex-shrink-0">
                     {item.category}
                   </span>
                 </button>
@@ -217,15 +217,16 @@ export function CommandPalette({ isOpen, onClose }: CommandPaletteProps) {
         </div>
 
         {/* Footer shortcuts */}
-        <div className="px-4 py-2.5 bg-surface border-t border-surface-border flex items-center justify-between text-[11px] font-mono text-slate-500">
+        <div className="px-4 py-2.5 bg-surface border-t border-surface-border flex items-center justify-between text-xs font-sans text-slate-500">
           <div className="flex items-center gap-3">
             <span>↑↓ Navigate</span>
             <span>↵ Select</span>
             <span>Esc Close</span>
           </div>
-          <span className="text-cyan-400">RuralCare Clinical Workstation</span>
+          <span className="text-cyan-700">RuralCare Clinical Workstation</span>
         </div>
       </div>
     </div>
   );
 }
+
