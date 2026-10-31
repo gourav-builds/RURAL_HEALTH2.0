@@ -2,6 +2,7 @@ import { useState, useEffect, useRef, lazy, Suspense } from 'react';
 import { useNavigate, useSearchParams, useParams } from 'react-router-dom';
 import { createConsultation, updateConsultation, getConsultation, markAwaitingReview } from '@/db/consultations';
 import { getPatient } from '@/db/patients';
+import { db } from '@/db';
 import type { Consultation, Patient } from '@/types';
 import { formatDateTime } from '@/utils';
 import { ClinicalBadge, SyncBadge } from '@/components/StatusBadges';
@@ -29,6 +30,8 @@ export function ConsultationEditorScreen() {
   const { addToast }     = useToast();
 
   const [patient, setPatient]           = useState<Patient | null>(null);
+  const [allPatients, setAllPatients]   = useState<Patient[]>([]);
+  const [selectedPatientId, setSelectedPatientId] = useState<string>(patientId);
   const [consultation, setConsultation] = useState<Consultation | null>(null);
   const [chiefComplaint, setChiefComplaint] = useState('');
   const [notes, setNotes]               = useState('');
@@ -53,18 +56,25 @@ export function ConsultationEditorScreen() {
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef   = useRef<Blob[]>([]);
 
+  // Load all patients for selection if starting fresh
+  useEffect(() => {
+    db.patients.filter(p => !p.deletedAt).toArray().then(setAllPatients);
+  }, []);
+
   // Load existing consultation for edit
   useEffect(() => {
     if (id) {
       getConsultation(id).then(c => {
         if (c) {
           setConsultation(c);
+          setSelectedPatientId(c.patientId);
           setChiefComplaint(c.chiefComplaint);
           setNotes(c.notes);
           getPatient(c.patientId).then(p => setPatient(p ?? null));
         }
       });
     } else if (patientId) {
+      setSelectedPatientId(patientId);
       getPatient(patientId).then(p => setPatient(p ?? null));
     }
   }, [id, patientId]);
@@ -111,8 +121,8 @@ export function ConsultationEditorScreen() {
           });
         }
       } else {
-        const pid = patientId || consultation?.patientId || '';
-        if (!pid) throw new Error('No patient selected');
+        const pid = selectedPatientId || patientId || consultation?.patientId || '';
+        if (!pid) throw new Error('Please select a patient for this consultation.');
         const c = await createConsultation({
           patientId: pid,
           chiefComplaint,
@@ -324,6 +334,38 @@ export function ConsultationEditorScreen() {
         {/* Left Column: Form & Notes */}
         <div className={`space-y-4 ${showAnatomy ? 'lg:col-span-7' : 'lg:col-span-12'}`}>
           <div className="card space-y-4">
+            {/* Patient selection if not preset */}
+            {!isEdit && (!patientId || !patient) && (
+              <div className="field">
+                <label className="label" htmlFor="select-patient">
+                  Select Patient<span className="text-red-700 ml-0.5">*</span>
+                </label>
+                <select
+                  id="select-patient"
+                  className="input text-sm"
+                  value={selectedPatientId}
+                  onChange={e => {
+                    const selId = e.target.value;
+                    setSelectedPatientId(selId);
+                    const found = allPatients.find(p => p.id === selId);
+                    setPatient(found ?? null);
+                  }}
+                >
+                  <option value="">-- Choose a registered patient --</option>
+                  {allPatients.map(p => (
+                    <option key={p.id} value={p.id}>
+                      {p.firstName} {p.lastName} ({p.id.startsWith('RC-') ? p.id : p.id.slice(0, 8)}) - {p.knownConditions || 'General Visit'}
+                    </option>
+                  ))}
+                </select>
+                {allPatients.length === 0 && (
+                  <p className="text-xs text-amber-700 mt-1">
+                    No patients enrolled yet. Register a patient first or load demo records.
+                  </p>
+                )}
+              </div>
+            )}
+
             {/* Chief complaint */}
             <div className="field">
               <label className="label" htmlFor="chiefComplaint">
